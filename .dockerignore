@@ -1,0 +1,10 @@
+.git
+.gitignore
+.qodo
+target/
+**/target/
+*.log
+.DS_Store
+.idea/
+*.iml
+doc/

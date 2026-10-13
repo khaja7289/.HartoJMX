@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  har-convertor-webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: har-convertor-webapp:latest
+    container_name: har-convertor-webapp
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - FORWARD_HEADERS_STRATEGY=none
+      - JAVA_OPTS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

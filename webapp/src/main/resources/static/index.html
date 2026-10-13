@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f6f3">
+  <title>HAR / JMX Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="wordmark" href="/" aria-label="HAR JMX Studio home"><span class="mark">H</span><span>HAR <i>/</i> JMX</span></a>
+    <div class="topbar-meta"><span class="live-dot"></span> CONVERSION WORKSPACE <span class="meta-divider"></span> NO ACCOUNT</div>
+  </header>
+
+  <main class="workspace">
+    <section class="intro">
+      <div class="intro-copy">
+        <p class="eyebrow">BROWSER TRAFFIC, READY TO TEST</p>
+        <h1>Turn a journey<br><span>into a test plan.</span></h1>
+        <p class="lede">Bring your HAR recordings together. Set the transaction order, then download one JMeter script (.jmx).</p>
+      </div>
+      <div class="intro-stamp" aria-hidden="true"><span>01</span><b>HAR</b><i>→</i><b>JMX</b><small>ONE SCRIPT</small></div>
+    </section>
+
+    <form id="convert-form" class="tool" novalidate>
+      <section class="input-section" aria-labelledby="files-heading">
+        <div class="section-heading">
+          <div class="section-number">01</div>
+          <div><h2 id="files-heading">Add recordings</h2><p>Choose one or more .har files. Their order becomes the transaction order.</p></div>
+        </div>
+
+        <label id="drop-zone" class="drop-zone" for="har-files">
+          <input id="har-files" name="files" type="file" accept=".har,application/json" multiple>
+          <span class="upload-symbol" aria-hidden="true">+</span>
+          <span class="drop-title">Drop HAR files here <span>or browse</span></span>
+          <span class="drop-note">No file-count limit · 25 MB per file · 100 MB total</span>
+        </label>
+
+        <div id="queue-shell" class="queue-shell" hidden>
+          <div class="queue-head"><span id="queue-count">0 TRANSACTIONS</span><button id="clear-files" class="text-button" type="button">Clear all</button></div>
+          <ol id="file-list" class="file-list" aria-label="HAR transaction order"></ol>
+        </div>
+        <p class="privacy-note"><span class="lock-mark" aria-hidden="true">◈</span> HARs and generated files are temporary and cleaned up automatically.</p>
+      </section>
+
+      <section class="options-section" aria-labelledby="scenario-heading">
+        <div class="section-heading compact-heading">
+          <div class="section-number">02</div>
+          <div><h2 id="scenario-heading">Test scenario & assertions</h2><p>Configure load profile and response verification.</p></div>
+        </div>
+        <label class="scenario-toggle"><input id="scenario-enabled" name="scenarioEnabled" type="checkbox"><span>Generate scenario load profile</span><small>Off generates a regular JMX Thread Group.</small></label>
+        <div class="scenario-grid">
+          <label class="field"><span>Scenario profile</span>
+            <select id="scenario" name="scenario">
+              <option value="load">Load</option>
+              <option value="scalability">Scalability</option>
+              <option value="spike">Spike</option>
+              <option value="endurance">Endurance</option>
+              <option value="stress">Stress</option>
+            </select>
+          </label>
+          <label class="field"><span>Peak users</span><input id="users" name="users" type="number" min="1" max="1000000" value="100" required></label>
+          <label class="field"><span>Execute time <small>seconds</small></span><input id="execute-time" name="executeTime" type="number" min="1" value="600" required></label>
+          <label class="field"><span>Ramp-up <small>seconds</small></span><input id="ramp-up" name="rampUp" type="number" min="0" value="60" required></label>
+          <label class="field"><span>Ramp-down <small>seconds</small></span><input id="ramp-down" name="rampDown" type="number" min="0" value="30" required></label>
+        </div>
+        <p id="scenario-description" class="scenario-description">Ramp to peak users, hold, then ramp down. Execute time includes both ramps.</p>
+        <p id="plugin-note" class="plugin-note" hidden>Scenario plans use Ultimate Thread Group. Install JMeter Plugins Manager's <a href="https://jmeter-plugins.org/?search=jpgc-casutg" target="_blank" rel="noreferrer">Custom Thread Groups (jpgc-casutg)</a> before opening the JMX.</p>
+
+        <div class="message-check-grid">
+          <label class="field"><span>Unique response text check 1 <small>optional</small></span><input id="response-message-one" name="responseMessageOne" type="text" placeholder="e.g. OK, success, or status" autocomplete="off"></label>
+          <label class="field"><span>Unique response text check 2 <small>optional</small></span><input id="response-message-two" name="responseMessageTwo" type="text" placeholder="e.g. Created, true, or data token" autocomplete="off"></label>
+        </div>
+        <p class="scenario-description">BeanShell Assertion: Accepts any positive response (200 & 300 series). When response text checks are provided, both must be valid in the response for the request to pass.</p>
+      </section>
+
+      <section class="options-section" aria-labelledby="filters-heading">
+        <div class="section-heading compact-heading">
+          <div class="section-number">03</div>
+          <div><h2 id="filters-heading">Request filters <span class="optional">OPTIONAL</span></h2><p>Leave blank to include all requests.</p></div>
+        </div>
+        <div class="filter-grid">
+          <label class="field"><span>Include URL pattern</span><input id="filter-include" name="filterInclude" type="text" placeholder="https://shop.example/.*" autocomplete="off"></label>
+          <label class="field"><span>Exclude URL pattern</span><input id="filter-exclude" name="filterExclude" type="text" placeholder="(?i).*\.(css|png|woff2?)$" autocomplete="off"></label>
+          <label class="field field-wide"><span>Remove request headers <small>comma-separated</small></span><input id="remove-headers" name="removeHeaders" type="text" placeholder="User-Agent, X-Trace-Id" autocomplete="off"></label>
+        </div>
+      </section>
+
+      <section id="correlation-results" class="correlation-results" aria-live="polite" hidden>
+        <div class="section-heading compact-heading">
+          <div class="section-number">04</div>
+          <div><h2>Auto-Correlated Components</h2><p>Detected dynamic tokens in responses reused in subsequent requests. Agree to auto-correlate or ignore for manual correlation.</p></div>
+        </div>
+        <div class="correlation-toolbar">
+          <label class="select-all-label"><input id="select-all-correlations" type="checkbox" checked> <span>Select / Deselect all components</span></label>
+        </div>
+        <ul id="correlation-list" class="correlation-list"></ul>
+        <div id="correlation-actions" class="correlation-actions" hidden>
+          <button id="generate-with-correlations" class="convert-button" type="button"><span>Agree to Auto-Correlate (Generate JMX)</span><span class="button-arrow" aria-hidden="true">↗</span></button>
+          <button id="generate-without-correlations" class="secondary-button" type="button">Ignore / Manual Correlation (Generate JMX)</button>
+        </div>
+      </section>
+
+      <footer class="action-row">
+        <div class="status-wrap"><span id="status-indicator" class="status-indicator"></span><p id="status" role="status" aria-live="polite">Ready when you are.</p></div>
+        <button id="convert-button" class="convert-button" type="submit" disabled><span>Analyze HARs</span><span class="button-arrow" aria-hidden="true">↗</span></button>
+      </footer>
+    </form>
+
+    <footer class="page-footer"><span>HAR CONVERTOR</span><span>POWERED BY APACHE JMETER</span><span>PUBLIC PREVIEW · NO LOGIN</span></footer>
+  </main>
+</body>
+</html>

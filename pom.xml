@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.github.vdaburon</groupId>
+    <artifactId>har-convertor-jmeter-plugin</artifactId>
+    <version>10.0</version>
+    <packaging>jar</packaging>
+
+    <name>Apache JMeter Plugin to convert a HAR file to a JMeter script and Record XML</name>
+    <description>Apache JMeter Plugin to convert a HAR file to a JMeter script and Record XML</description>
+    <url>https://github.com/vdaburon/har-convertor-jmeter-plugin</url>
+    <inceptionYear>2024</inceptionYear>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <comments>A business-friendly OSS license</comments>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>vdaburon</id>
+            <name>Vincent DABURON</name>
+            <email>vdaburon at gmail dot com</email>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <issueManagement>
+        <system>jmeter-plugins-google-group</system>
+        <url>https://groups.google.com/g/jmeter-plugins</url>
+    </issueManagement>
+
+    <scm>
+        <connection>https://github.com/vdaburon/har-convertor-jmeter-plugin.git</connection>
+        <developerConnection>https://github.com/vdaburon/har-convertor-jmeter-plugin.git</developerConnection>
+        <url>https://github.com/vdaburon/har-convertor-jmeter-plugin</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <mavenCentralAutoReleaseAfterClose>false</mavenCentralAutoReleaseAfterClose>
+        <!-- This Jackson version is available with JMeter 5.6.3, need version >= 2.15 -->
+        <jackson.version>2.16.1</jackson.version>
+        <jackson.scope>provided</jackson.scope>
+    </properties>
+
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.jmeter</groupId>
+            <artifactId>ApacheJMeter_core</artifactId>
+            <version>5.5</version>
+            <scope>provided</scope>
+            <exclusions>
+                <!-- Use same version of jackson as available with JMeter 5.6.3 -->
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-annotations</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-lang3</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.36</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- This JMeter Plugin use mainly this tool -->
+        <dependency>
+            <groupId>io.github.vdaburon</groupId>
+            <artifactId>har-to-jmeter-convertor</artifactId>
+            <version>10.0</version>
+            <exclusions>
+                <!-- Use same version of jackson as available with JMeter 5.6.3 -->
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-annotations</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+                <!-- Use commons-lang3 library provided by JMeter to avoid conflict -->
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-lang3</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Use same version of jackson as available with JMeter 5.6.3 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+            <scope>${jackson.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
+            <scope>${jackson.scope}</scope>
+        </dependency>
+        <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+            <scope>${jackson.scope}</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- create the uber jar : mvn clean package -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.8.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>
+                                        io.github.vdaburon.jmeterplugins.har.HarConvertorIntegrateGui
+                                    </mainClass>
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- deploy jar in maven central or stagging only : mvn -DmavenCentralAutoReleaseAfterClose=false clean deploy
+                 if mavenCentralAutoReleaseAfterClose == true then release in maven central;
+                 if mavenCentralAutoReleaseAfterClose == false then release in stagging only not maven central
+                -->
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.10.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central_publishing</publishingServerId>
+                    <centralBaseUrl>https://central.sonatype.com</centralBaseUrl>
+                    <waitUntil>published</waitUntil>
+                    <autoPublish>${mavenCentralAutoReleaseAfterClose}</autoPublish>
+                </configuration>
+            </plugin>
+        </plugins>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <!-- add version for the generated library in the script shell .cmd and .sh -->
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
+
+</project>
