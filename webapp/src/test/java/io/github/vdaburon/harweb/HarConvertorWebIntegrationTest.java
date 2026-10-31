@@ -74,6 +74,7 @@ class HarConvertorWebIntegrationTest {
         org.springframework.test.web.servlet.MvcResult result = mockMvc.perform(multipart("/api/convert").file(launch).file(login)
                         .param("scenarioEnabled", "true")
                         .param("scenario", "scalability").param("users", "12")
+                        .param("tph", "25")
                         .param("executeTime", "600").param("rampUp", "60").param("rampDown", "30")
                         .param("correlationIds", "corr_1_access_token")
                         .param("responseMessageOne", "OK")
@@ -110,10 +111,11 @@ class HarConvertorWebIntegrationTest {
         assertTrue(targetXml.contains("${C_bearerToken}") || targetSampler.getAttribute("testname").contains("${C_bearerToken}"),
                 "Dynamic token should be replaced with variable in target sampler");
 
-        NodeList assertions = document.getElementsByTagName("BeanShellAssertion");
+        NodeList assertions = document.getElementsByTagName("JSR223Assertion");
         assertEquals(samplers.getLength(), assertions.getLength());
         String assertionText = assertions.item(0).getTextContent();
-        assertTrue(assertionText.contains("code < 200 || code >= 400"), "Assertion must check 2xx/3xx codes");
+        assertTrue(assertionText.contains("OK_CODES = [\"200\", \"201\", \"202\", \"204\", \"302\"] as Set"),
+                "Assertion must check configured status codes");
         assertTrue(assertionText.contains("OK") && assertionText.contains("access_token"), "Assertion must check both text checks");
     }
 
@@ -130,8 +132,9 @@ class HarConvertorWebIntegrationTest {
 
         Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder()
                 .parse(new ByteArrayInputStream(jmxBytes));
-        assertEquals(1, document.getElementsByTagName("ThreadGroup").getLength());
-        assertEquals(0, document.getElementsByTagName("kg.apc.jmeter.threads.UltimateThreadGroup").getLength());
+        NodeList utg = document.getElementsByTagName("kg.apc.jmeter.threads.UltimateThreadGroup");
+        assertEquals(1, utg.getLength());
+        assertEquals("BaseTestTamplet", utg.item(0).getAttributes().getNamedItem("testname").getNodeValue());
     }
 
     @Test

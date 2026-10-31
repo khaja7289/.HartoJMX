@@ -1,51 +1,39 @@
+// HAR to JMeter Studio - Streamlined AI Client
 const form = document.querySelector("#convert-form");
 const input = document.querySelector("#har-files");
 const dropZone = document.querySelector("#drop-zone");
 const fileList = document.querySelector("#file-list");
 const queueShell = document.querySelector("#queue-shell");
 const queueCount = document.querySelector("#queue-count");
-const convertButton = document.querySelector("#convert-button");
+const btnStandardConvert = document.querySelector("#btn-standard-convert");
+const btnAiConvert = document.querySelector("#btn-ai-convert");
 const statusText = document.querySelector("#status");
 const statusWrap = document.querySelector(".status-wrap");
-const correlationResults = document.querySelector("#correlation-results");
+const aiInsightsPanel = document.querySelector("#ai-insights-panel");
+const aiInsightsStatus = document.querySelector("#ai-insights-status");
+const aiStatsPill = document.querySelector("#ai-stats-pill");
 const correlationList = document.querySelector("#correlation-list");
-const selectAllCheckbox = document.querySelector("#select-all-correlations");
-const scenarioSelect = document.querySelector("#scenario");
-const scenarioDescription = document.querySelector("#scenario-description");
-const scenarioEnabled = document.querySelector("#scenario-enabled");
-const scenarioGrid = document.querySelector(".scenario-grid");
-const pluginNote = document.querySelector("#plugin-note");
-const correlationActions = document.querySelector("#correlation-actions");
+
 let selectedFiles = [];
-let analyzedCandidates = null;
-
+let serverApiKey = "";
 const naturalCompare = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
-const scenarioDescriptions = {
-  load: "Ramp to peak users, hold, then ramp down. Execute time includes both ramps.",
-  scalability: "Add users in four gradual cohorts across ramp-up, hold the full peak, then ramp down.",
-  spike: "Hold a 10% baseline, add the remaining users for a short spike near the end, then ramp down.",
-  endurance: "Hold the selected peak for the full execute time; ramp-up and ramp-down are added before and after the hold.",
-  stress: "Add users in up to four abrupt steps from the start through the end of ramp-up, hold peak, then ramp down."
-};
 
-scenarioSelect.addEventListener("change", () => {
-  scenarioDescription.textContent = scenarioDescriptions[scenarioSelect.value];
-});
-
-scenarioEnabled.addEventListener("change", () => {
-  scenarioGrid.classList.toggle("is-disabled", !scenarioEnabled.checked);
-  scenarioGrid.querySelectorAll("input, select").forEach(control => { control.disabled = !scenarioEnabled.checked; });
-  scenarioDescription.hidden = !scenarioEnabled.checked;
-  pluginNote.hidden = !scenarioEnabled.checked;
-});
-scenarioEnabled.dispatchEvent(new Event("change"));
-
-if (selectAllCheckbox) {
-  selectAllCheckbox.addEventListener("change", () => {
-    const checkboxes = correlationList.querySelectorAll(".candidate-choice");
-    checkboxes.forEach(cb => { cb.checked = selectAllCheckbox.checked; });
-  });
+// Load server config (detect if GEMINI_API_KEY is configured in Docker / environment)
+async function fetchServerConfig() {
+  try {
+    const res = await fetch("/api/config");
+    if (res.ok) {
+      const data = await res.json();
+      if (data.geminiKey) {
+        serverApiKey = data.geminiKey;
+        console.log("Server-configured Gemini API Key detected.");
+      }
+    }
+  } catch (err) {
+    console.debug("Config check completed:", err);
+  }
 }
+fetchServerConfig();
 
 function setStatus(message, state = "") {
   statusText.textContent = message;
@@ -53,79 +41,19 @@ function setStatus(message, state = "") {
   if (state) statusWrap.classList.add(`is-${state}`);
 }
 
-function showCorrelationCandidates(candidates) {
-  correlationList.replaceChildren();
-  correlationResults.hidden = false;
-  correlationActions.hidden = candidates.length === 0;
-  analyzedCandidates = candidates;
-  if (!candidates.length) {
-    const empty = document.createElement("li");
-    empty.className = "correlation-empty";
-    empty.textContent = "No auto-correlation token candidates detected. Converting JMX directly without correlation changes.";
-    correlationList.append(empty);
-    return;
-  }
-  if (selectAllCheckbox) {
-    selectAllCheckbox.checked = true;
-  }
-  for (const candidate of candidates) {
-    const item = document.createElement("li");
-    item.className = "correlation-item";
-
-    const choice = document.createElement("input");
-    choice.type = "checkbox";
-    choice.className = "candidate-choice";
-    choice.value = candidate.id;
-    choice.checked = true;
-    choice.setAttribute("aria-label", `Apply auto-correlation ${candidate.variable}`);
-    choice.addEventListener("change", () => {
-      const all = correlationList.querySelectorAll(".candidate-choice");
-      const checked = correlationList.querySelectorAll(".candidate-choice:checked");
-      if (selectAllCheckbox) {
-        selectAllCheckbox.checked = all.length === checked.length;
-      }
-    });
-
-    const infoWrap = document.createElement("div");
-    infoWrap.className = "correlation-info";
-
-    const variable = document.createElement("span");
-    variable.className = "correlation-name";
-    variable.textContent = candidate.variable;
-
-    const badge = document.createElement("span");
-    const isJson = candidate.extractorType === "JSON";
-    badge.className = `extractor-badge ${isJson ? "json" : "regex"}`;
-    badge.textContent = isJson && candidate.jsonPath ? `JSON Extractor: ${candidate.jsonPath}` : `Regex Extractor`;
-    variable.append(badge);
-
-    const route = document.createElement("span");
-    route.className = "correlation-route";
-    route.textContent = `${candidate.sourceFile}: ${candidate.sourceUrl} → ${candidate.targetUrl}`;
-
-    infoWrap.append(variable, route);
-
-    const value = document.createElement("span");
-    value.className = "correlation-value";
-    value.textContent = `Value: ${candidate.value}`;
-
-    item.append(choice, infoWrap, value);
-    correlationList.append(item);
-  }
-}
-
 function formatSize(bytes) {
   return bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
 function renderQueue() {
-  analyzedCandidates = null;
-  correlationResults.hidden = true;
-  correlationActions.hidden = true;
+  if (aiInsightsPanel) aiInsightsPanel.hidden = true;
   fileList.replaceChildren();
   queueShell.hidden = selectedFiles.length === 0;
   queueCount.textContent = `${String(selectedFiles.length).padStart(2, "0")} TRANSACTION${selectedFiles.length === 1 ? "" : "S"}`;
-  convertButton.disabled = selectedFiles.length === 0;
+  
+  const hasFiles = selectedFiles.length > 0;
+  if (btnStandardConvert) btnStandardConvert.disabled = !hasFiles;
+  if (btnAiConvert) btnAiConvert.disabled = !hasFiles;
 
   selectedFiles.forEach((file, index) => {
     const row = document.createElement("li");
@@ -194,7 +122,7 @@ function addFiles(fileCollection) {
   if (incoming.length !== fileCollection.length) {
     setStatus("Only .har files can be added.", "error");
   } else {
-    setStatus(selectedFiles.length ? "Transaction order is ready. Click Analyze HARs." : "Choose at least one HAR file.");
+    setStatus(selectedFiles.length ? "Files ready. Choose 'Convert to JMX' or 'AI-Powered JMX'." : "Choose at least one HAR file.");
   }
 }
 
@@ -223,29 +151,18 @@ for (const eventName of ["dragleave", "drop"]) {
 }
 dropZone.addEventListener("drop", event => addFiles(event.dataTransfer.files));
 
-function buildRequestData(correlationIds = []) {
+function buildFormData(correlationIds = []) {
   const data = new FormData();
   selectedFiles.forEach(file => data.append("files", file, file.name));
-  if (correlationIds !== null) {
-    data.append("filterInclude", document.querySelector("#filter-include").value);
-    data.append("filterExclude", document.querySelector("#filter-exclude").value);
-    data.append("removeHeaders", document.querySelector("#remove-headers").value);
-    data.append("scenarioEnabled", scenarioEnabled.checked);
-    data.append("scenario", scenarioSelect.value);
-    data.append("users", document.querySelector("#users").value);
-    data.append("executeTime", document.querySelector("#execute-time").value);
-    data.append("rampUp", document.querySelector("#ramp-up").value);
-    data.append("rampDown", document.querySelector("#ramp-down").value);
-    data.append("responseMessageOne", document.querySelector("#response-message-one").value);
-    data.append("responseMessageTwo", document.querySelector("#response-message-two").value);
+  if (correlationIds && correlationIds.length) {
     correlationIds.forEach(id => data.append("correlationIds", id));
   }
   return data;
 }
 
-function validateInputs() {
+function validateFiles() {
   if (!selectedFiles.length) {
-    setStatus("Choose at least one HAR file.", "error");
+    setStatus("Please choose at least one .har file to convert.", "error");
     return false;
   }
   const totalBytes = selectedFiles.reduce((total, file) => total + file.size, 0);
@@ -253,96 +170,276 @@ function validateInputs() {
     setStatus("Files must be under 25 MB each and 100 MB combined.", "error");
     return false;
   }
-  if (scenarioEnabled.checked) {
-    const users = Number(document.querySelector("#users").value);
-    const executeTime = Number(document.querySelector("#execute-time").value);
-    const rampUp = Number(document.querySelector("#ramp-up").value);
-    const rampDown = Number(document.querySelector("#ramp-down").value);
-    if (!Number.isInteger(users) || users < 1 || !Number.isInteger(executeTime) || executeTime < 1 ||
-        !Number.isInteger(rampUp) || rampUp < 0 || !Number.isInteger(rampDown) || rampDown < 0 ||
-        (scenarioSelect.value !== "endurance" && rampUp + rampDown > executeTime)) {
-      setStatus("Enter valid whole seconds; ramp-up plus ramp-down must fit within execute time except for Endurance.", "error");
-      return false;
-    }
-  }
   return true;
 }
 
-async function analyzeHarFiles() {
-  convertButton.disabled = true;
-  setStatus("Scanning HARs for auto-correlated components…", "working");
-  try {
-    const response = await fetch("/api/analyze", { method: "POST", body: buildRequestData(null) });
-    if (!response.ok) {
-      const result = await response.json().catch(() => ({}));
-      throw new Error(result.message || `HAR analysis failed (${response.status}).`);
-    }
-    const candidates = await response.json();
-    showCorrelationCandidates(candidates);
-    if (candidates.length === 0) {
-      await convertJmx([]);
-    } else {
-      correlationResults.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      setStatus("Review components: agree to auto-correlate, or choose ignore for manual correlation.");
-    }
-  } catch (error) {
-    setStatus(error.message || "HAR analysis failed.", "error");
-  } finally {
-    convertButton.disabled = selectedFiles.length === 0;
+// Download JMX blob
+async function executeConversion(correlationIds = [], filename = "har-convertor-script.jmx") {
+  const response = await fetch("/api/convert", { method: "POST", body: buildFormData(correlationIds) });
+  if (!response.ok) {
+    const result = await response.json().catch(() => ({}));
+    throw new Error(result.message || `Conversion failed (${response.status}).`);
   }
+  const file = await response.blob();
+  const downloadUrl = URL.createObjectURL(file);
+  const anchor = document.createElement("a");
+  anchor.href = downloadUrl;
+  anchor.download = filename;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
 }
 
-async function convertJmx(correlationIds) {
-  convertButton.disabled = true;
-  if (document.querySelector("#generate-with-correlations")) {
-    document.querySelector("#generate-with-correlations").disabled = true;
-  }
-  if (document.querySelector("#generate-without-correlations")) {
-    document.querySelector("#generate-without-correlations").disabled = true;
-  }
-  setStatus(correlationIds.length ? "Generating JMX with auto-correlations…" : "Generating JMX (manual correlation mode)…", "working");
+// 1. STANDARD CONVERSION
+btnStandardConvert.addEventListener("click", async () => {
+  if (!validateFiles()) return;
+  setBusy(true);
+  setStatus("Generating standard JMeter script (.jmx)…", "working");
   try {
-    const response = await fetch("/api/convert", { method: "POST", body: buildRequestData(correlationIds) });
-    if (!response.ok) {
-      const result = await response.json().catch(() => ({}));
-      throw new Error(result.message || `Conversion failed (${response.status}).`);
-    }
-    const file = await response.blob();
-    const downloadUrl = URL.createObjectURL(file);
-    const anchor = document.createElement("a");
-    anchor.href = downloadUrl;
-    anchor.download = "har-convertor-script.jmx";
-    document.body.append(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
-    setStatus("JMX generated and downloaded successfully (har-convertor-script.jmx).");
-  } catch (error) {
-    setStatus(error.message || "Conversion failed. Check the HAR files and try again.", "error");
+    await executeConversion([], "har-convertor-script.jmx");
+    setStatus("Standard JMX downloaded successfully (har-convertor-script.jmx).");
+  } catch (err) {
+    setStatus(err.message || "Conversion failed.", "error");
   } finally {
-    convertButton.disabled = selectedFiles.length === 0;
-    if (document.querySelector("#generate-with-correlations")) {
-      document.querySelector("#generate-with-correlations").disabled = false;
-    }
-    if (document.querySelector("#generate-without-correlations")) {
-      document.querySelector("#generate-without-correlations").disabled = false;
-    }
+    setBusy(false);
   }
+});
+
+// 2. AI-POWERED CONVERSION
+btnAiConvert.addEventListener("click", async () => {
+  if (!validateFiles()) return;
+  setBusy(true);
+  setStatus("✨ Step 1/3: Analyzing HAR traffic for dynamic candidate tokens…", "working");
+
+  try {
+    // 1. Scan HAR locally via backend (0 tokens)
+    const analyzeRes = await fetch("/api/analyze", { method: "POST", body: buildFormData([]) });
+    if (!analyzeRes.ok) {
+      throw new Error("Could not analyze HAR files for correlation.");
+    }
+    const candidates = await analyzeRes.json();
+
+    if (!candidates || candidates.length === 0) {
+      setStatus("No dynamic tokens found. Generating clean JMX…", "working");
+      await executeConversion([], "har-convertor-script.jmx");
+      setStatus("No dynamic tokens detected. Downloaded standard JMX successfully.");
+      return;
+    }
+
+    // 2. Consult Gemini AI with compact micro-payload (~300 tokens)
+    setStatus("✨ Step 2/3: Consulting Gemini AI (~300 tokens) to classify tokens and filter noise…", "working");
+    const aiResults = await evaluateWithAi(candidates);
+
+    // 3. Extract recommended correlation IDs (CRITICAL + PARAMETER, ignore NOISE)
+    const recommendedIds = aiResults
+      .filter(r => r.recommend)
+      .map(r => r.id);
+
+    // Render AI insights
+    renderAiInsights(candidates, aiResults);
+
+    // 4. Generate JMX with auto-correlations
+    setStatus(`✨ Step 3/3: Auto-correlating ${recommendedIds.length} tokens into JMeter script…`, "working");
+    await executeConversion(recommendedIds, "har-convertor-script-ai.jmx");
+
+    const criticalCount = aiResults.filter(r => r.classification === "CRITICAL").length;
+    const paramCount = aiResults.filter(r => r.classification === "PARAMETER").length;
+    const noiseCount = aiResults.filter(r => r.classification === "NOISE").length;
+
+    setStatus(`✨ AI Correlation Complete! Downloaded har-convertor-script-ai.jmx with ${criticalCount + paramCount} correlated variables (${noiseCount} noise tokens filtered).`);
+  } catch (err) {
+    console.error("AI conversion failed:", err);
+    setStatus(err.message || "AI conversion failed.", "error");
+  } finally {
+    setBusy(false);
+  }
+});
+
+function setBusy(busy) {
+  btnStandardConvert.disabled = busy || selectedFiles.length === 0;
+  btnAiConvert.disabled = busy || selectedFiles.length === 0;
 }
 
-form.addEventListener("submit", async event => {
-  event.preventDefault();
-  if (!validateInputs()) return;
-  await analyzeHarFiles();
-});
+// Low-token evaluation: Calls Gemini API if key exists, otherwise applies smart local heuristic
+async function evaluateWithAi(candidates) {
+  const apiKey = serverApiKey || localStorage.getItem("gemini_api_key") || "";
 
-document.querySelector("#generate-with-correlations").addEventListener("click", () => {
-  const ids = Array.from(document.querySelectorAll(".candidate-choice:checked"), checkbox => checkbox.value);
-  if (ids.length === 0) {
-    setStatus("Select at least one component to auto-correlate, or choose 'Ignore / Manual Correlation'.", "error");
-    return;
+  if (apiKey) {
+    try {
+      return await callGeminiAdvisor(candidates, apiKey);
+    } catch (err) {
+      console.warn("Gemini remote call failed, using built-in heuristic:", err.message);
+    }
   }
-  convertJmx(ids);
-});
 
-document.querySelector("#generate-without-correlations").addEventListener("click", () => convertJmx([]));
+  // Fallback to built-in smart heuristic (0 tokens, instant)
+  return candidates.map(classifyCandidateHeuristic);
+}
+
+// Compact Gemini Flash Call (~300 tokens total)
+async function callGeminiAdvisor(candidates, apiKey) {
+  const microCandidates = candidates.map(c => ({
+    id: c.id,
+    variable: c.variable,
+    key: c.key,
+    value: (c.value || "").substring(0, 45),
+    targetUrl: c.targetUrl
+  }));
+
+  const prompt = `You evaluate candidate correlation tokens for JMeter.
+Classify each token into: "CRITICAL" (Auth/Session/CSRF), "PARAMETER" (Business IDs), "NOISE" (Analytics/tracking/timestamps).
+Return ONLY a valid JSON array of objects with keys: "id" (string), "classification" ("CRITICAL" | "PARAMETER" | "NOISE"), "recommend" (boolean: false for NOISE, true for CRITICAL/PARAMETER), and "reason" (short 1-sentence rationale).
+Candidates:
+${JSON.stringify(microCandidates)}`;
+
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: "application/json" }
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Gemini API returned ${res.status}`);
+  }
+
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  const parsed = JSON.parse(text);
+
+  return parsed.map(item => ({
+    id: item.id,
+    classification: item.classification || "PARAMETER",
+    badgeClass: (item.classification || "PARAMETER").toLowerCase(),
+    badgeText: item.classification || "PARAMETER",
+    recommend: typeof item.recommend === "boolean" ? item.recommend : item.classification !== "NOISE",
+    reason: item.reason || "Verified by Gemini AI."
+  }));
+}
+
+// Built-in rule classifier for tokens (0 tokens consumed)
+function classifyCandidateHeuristic(candidate) {
+  const key = (candidate.key || "").toLowerCase();
+  const varName = (candidate.variable || "").toLowerCase();
+  const val = candidate.value || "";
+  const target = (candidate.targetUrl || "").toLowerCase();
+
+  // Noise / Analytics / Pixels
+  const noiseRegex = /(_ga|_gid|analytics|telemetry|track|pixel|utm_|timestamp|_time|cache|bust|_nonce|doubleclick|clarity|hotjar|newrelic|datadog|sentry)/i;
+  const isAnalyticsHost = /google-analytics\.com|googletagmanager\.com|doubleclick\.net|clarity\.ms|hotjar\.com|sentry\.io/i.test(target);
+  if (noiseRegex.test(key) || noiseRegex.test(varName) || isAnalyticsHost) {
+    return {
+      id: candidate.id,
+      classification: "NOISE",
+      badgeClass: "noise",
+      badgeText: "NOISE",
+      recommend: false,
+      reason: "Analytics/telemetry tracking token. Filtered out to keep load test script clean."
+    };
+  }
+
+  // Critical: Auth / Session / CSRF / Tokens
+  const authRegex = /(token|jwt|bearer|auth|session|jsession|sid|csrf|xsrf|accesstoken|refreshtoken|id_token|ticket|saml|oauth)/i;
+  const isJwt = val.startsWith("ey") && val.includes(".");
+  if (authRegex.test(key) || authRegex.test(varName) || isJwt) {
+    return {
+      id: candidate.id,
+      classification: "CRITICAL",
+      badgeClass: "critical",
+      badgeText: "CRITICAL",
+      recommend: true,
+      reason: "Essential authentication, session, or security token. Downstream requests require this."
+    };
+  }
+
+  // Business Parameters (Order ID, Cart ID, User ID)
+  return {
+    id: candidate.id,
+    classification: "PARAMETER",
+    badgeClass: "parameter",
+    badgeText: "PARAMETER",
+    recommend: true,
+    reason: "Dynamic business identifier reused across requests."
+  };
+}
+
+// Display AI Insights list
+function renderAiInsights(candidates, aiResults) {
+  if (!aiInsightsPanel) return;
+  aiInsightsPanel.hidden = false;
+  correlationList.replaceChildren();
+
+  const resultsMap = new Map(aiResults.map(r => [r.id, r]));
+  let criticalCount = 0;
+  let paramCount = 0;
+  let noiseCount = 0;
+
+  candidates.forEach(candidate => {
+    const aiRes = resultsMap.get(candidate.id) || {
+      classification: "PARAMETER",
+      badgeClass: "parameter",
+      badgeText: "PARAMETER",
+      recommend: true,
+      reason: "Evaluated by AI."
+    };
+
+    if (aiRes.classification === "CRITICAL") criticalCount++;
+    else if (aiRes.classification === "PARAMETER") paramCount++;
+    else if (aiRes.classification === "NOISE") noiseCount++;
+
+    const item = document.createElement("li");
+    item.className = "correlation-item";
+
+    const indicator = document.createElement("input");
+    indicator.type = "checkbox";
+    indicator.className = "candidate-choice";
+    indicator.checked = aiRes.recommend;
+    indicator.disabled = true;
+
+    const infoWrap = document.createElement("div");
+    infoWrap.className = "correlation-info";
+
+    const nameRow = document.createElement("div");
+    nameRow.className = "correlation-name";
+    nameRow.textContent = candidate.variable;
+
+    const badge = document.createElement("span");
+    badge.className = `ai-badge ${aiRes.badgeClass}`;
+    badge.textContent = aiRes.badgeText;
+    nameRow.append(badge);
+
+    const isJson = candidate.extractorType === "JSON";
+    const extractorBadge = document.createElement("span");
+    extractorBadge.className = `extractor-badge ${isJson ? "json" : "regex"}`;
+    extractorBadge.textContent = isJson && candidate.jsonPath ? `JSON: ${candidate.jsonPath}` : "Regex";
+    nameRow.append(extractorBadge);
+
+    const reasonEl = document.createElement("span");
+    reasonEl.className = "ai-reason";
+    reasonEl.textContent = aiRes.reason;
+
+    const route = document.createElement("span");
+    route.className = "correlation-route";
+    route.textContent = `${candidate.sourceUrl} → ${candidate.targetUrl}`;
+
+    infoWrap.append(nameRow, reasonEl, route);
+
+    const valueEl = document.createElement("span");
+    valueEl.className = "correlation-value";
+    valueEl.textContent = `Value: ${candidate.value}`;
+
+    item.append(indicator, infoWrap, valueEl);
+    correlationList.append(item);
+  });
+
+  if (aiStatsPill) {
+    aiStatsPill.textContent = `${criticalCount} Critical · ${paramCount} Parameter · ${noiseCount} Noise Filtered`;
+  }
+  if (aiInsightsStatus) {
+    aiInsightsStatus.innerHTML = `✨ <strong>AI Analysis Complete:</strong> Automatically correlated <strong>${criticalCount + paramCount} dynamic variables</strong> and ignored <strong>${noiseCount} analytics/tracking tokens</strong>.`;
+  }
+}

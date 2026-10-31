@@ -58,7 +58,10 @@ Choose a scenario profile and enter peak users, execute time, ramp-up, and ramp-
 | Endurance | One group ramps to the target and holds it for the full execute time, with ramps additional |
 | Stress | Up to four abrupt user cohorts are added across the ramp-up window, then held |
 
-Execute time includes ramp-up and ramp-down. The test plan uses the Ultimate Thread Group and requires JMeter Plugins Manager's **Custom Thread Groups** plugin (`jpgc-casutg`). Every generated HTTP sampler also receives a BeanShell Assertion expecting response code `200` and response message `OK`.
+Execute time includes ramp-up and ramp-down. Generated scripts are based on the standardized `BaseTamPlet.jmx` workload model architecture, featuring an `UltimateThreadGroup` (`BaseTestTamplet`) with automated pacing and logging fragments (`SaveItrateStartTime`, `ThinkTime`, `LogController`, `PaceTime`).
+- **Workload Model (WLM)**: Defaults to `Test_Users = 1` and `Test_TPH = 10` (Transactions Per Hour) with configurable startup and shutdown timings.
+- **Redirection Rule**: HTTP redirection (`HTTPSampler.follow_redirects`) is unchecked **only for 302 responses** (`false` for HTTP 302, and `true` for all remaining requests, with `HTTPSampler.auto_redirects = false`).
+- **Validation**: Every generated HTTP sampler receives an automated Groovy `JSR223Assertion` verifying acceptable response codes (`200`, `201`, `202`, `204`, `302`), response time thresholds (`v_AcceptableRespTime`), optional text checks, and Grafana telemetry variables.
 
 Correlation detection compares values in HAR responses against subsequent HAR requests. It identifies dynamic parameters and presents them in an interactive review step with standardized technology-based variable naming (`C_<variableName>`, e.g., `C_bearerToken`, `C_csrfToken`, `C_sessionId`). When auto-correlation is confirmed, the converter automatically:
 - Inserts a **JSON Extractor** (`JSONPostProcessor`) with the resolved JSONPath (e.g., `$.access_token`) for JSON responses.

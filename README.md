@@ -1,355 +1,494 @@
-<p align="center">
-<img src="https://github.com/vdaburon/har-convertor-jmeter-plugin/blob/main/doc/har_convertor_tool_logo.png" alt="har convertor jmeter plugin logo"/>
-  <p align="center">Convert a HAR file to a JMeter script and a Record XML file.</p>
-  <p align="center"><a href="https://github.com/vdaburon/har-convertor-jmeter-plugin">Link to github project har-convertor-jmeter-plugin</a></p>
-</p>
+# HAR to JMeter Studio & Convertor Plugin
 
-# Convert a HAR (Http ARchive) file to a JMeter script and a Record XML file.
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.vdaburon/har-convertor-jmeter-plugin)](https://central.sonatype.com/artifact/io.github.vdaburon/har-convertor-jmeter-plugin)
 [![Apache License](http://img.shields.io/badge/license-Apache-green.svg)](https://github.com/vdaburon/CreateHtmlForFilesInDirectory/blob/main/LICENSE)
-![Free](https://img.shields.io/badge/free-open--source-green.svg)
-[![Apache JMeter](https://img.shields.io/badge/Apache%20JMeter-green)](https://jmeter.apache.org/)
+[![Docker Support](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
+[![Apache JMeter](https://img.shields.io/badge/Apache%20JMeter-5.x-orange.svg)](https://jmeter.apache.org/)
+[![Google Gemini AI](https://img.shields.io/badge/Google%20Gemini-AI%20Correlation-brightgreen.svg)](https://ai.google.dev/)
 
-An article about motivations to create this tool: https://dzone.com/articles/convert-a-har-file-to-jmeter-script
+An enterprise-grade platform to **convert browser HTTP Archive (`.har`) recordings directly into production-ready Apache JMeter Test Plans (`.jmx`)**. 
 
-This tool is available in three forms:
-1. **JMeter GUI Plugin**: Access directly within JMeter from `Tools > vdn@github - HAR Convertor Tool`.
-2. **Command Line Interface (CLI)**: Automate conversions via `har-convertor-to-jmeter.sh` / `.cmd`.
-3. **Web Application & Docker**: Run a browser-based UI locally or deploy using Docker/Docker Compose.
+Whether you are converting single or multiple browser user interactions, this tool automates transaction creation, domain parameterization, workload schedule generation, **smart AI token correlation with Google Gemini**, and automated **JSR223 Groovy Assertions** designed for enterprise APM and Grafana monitoring.
 
-Since version 7.0, **Websocket** is manage with samplers from the plugin "WebSocket Samplers by Peter Doornbosch".
+---
 
-## GUI interface in the JMeter Tools Menu
-This tool is present in the Menu Tools > vdn@github - HAR Convertor Tool
+## Table of Contents
+- [1. Web UI Overview](#1-web-ui-overview)
+- [2. Multiple HAR Upload & Transaction Grouping](#2-multiple-har-upload--transaction-grouping)
+- [3. Conversion Modes: Standard vs AI-Powered](#3-conversion-modes-standard-vs-ai-powered)
+  - [Option A: Standard Convert to JMX](#option-a-standard-convert-to-jmx)
+  - [Option B: Gemini AI-Powered JMX Conversion](#option-b-gemini-ai-powered-jmx-conversion)
+  - [Feature Comparison Matrix](#feature-comparison-matrix)
+- [4. Under The Hood: How Conversion Works](#4-under-the-hood-how-conversion-works)
+  - [Rules & Best Practices to Record Clean .HAR Files](#rules--best-practices-to-record-clean-har-files)
+  - [Transaction Structure & Domain Parameterization](#transaction-structure--domain-parameterization)
+  - [Automated JSR223 Groovy Assertions Engine](#automated-jsr223-groovy-assertions-engine)
+- [5. End-to-End Architecture](#5-end-to-end-architecture)
+- [6. Quick Start Guide](#6-quick-start-guide)
+  - [Run with Docker Compose](#run-with-docker-compose-recommended)
+  - [Run Standalone JAR (Spring Boot)](#run-standalone-jar)
+  - [Run as JMeter GUI Plugin or CLI](#run-as-jmeter-gui-plugin-or-cli)
+- [7. Configuration & Environment Variables](#7-configuration--environment-variables)
+- [8. Release Notes](#8-release-notes)
+- [9. References & Upstream Library](#9-references--upstream-library)
 
-![Menu Tools](doc/images/jmeter_menu_tools_with_har_convertor.png)
+---
 
-When you click and the menu line "vdn@github - HAR Convertor Tool", the tool GUI is display
+## 1. Web UI Overview
 
-![Menu Tools](doc/images/har_convertor_tool_gui.png)
+The **HAR to JMeter Studio** provides an interactive, dark/light studio interface designed for performance engineers and QA teams.
 
-### Parameters
-Parameters are :
-* har_in the HAR file to read (exported HAR from Web Browser :  Chrome, Firefox, Edge ...)
-* jmx_out the file JMeter script generated, if the text field is empty then the jmx_out is the file name of har_in without the extension with suffix ".jmx" <br/>
-  e.g. har_in = myhar1.har, jmx_out is empty then file_out will be myhar1.jmx
-* record_out create the record xml file from the har file (could be open with the Listener View Results Tree) <br/>
-  e.g. record_out = record.xml
-* add_result_tree_record, add a View Result Tree to view the Recording XML File Generated (default true), the record_out must be not empty
-* external_file_infos, external csv file or json file contains information about Timestamp, Transaction Name, start or end. <br/>
-    e.g. external_file_infos = myappli_transactions.csv or external_file_infos = txn-markers.json
-* new_tc_pause time between 2 urls to create a new page (Transaction Controller) (default 5000 = jmeter property value : proxy.pause=5000) <br/>
-  * e.g. 5000 for 5 sec between 2 urls
-* page_start_number, set the start page number for partial recording (default 1, must be an integer > 0) <br/>
-* sampler_start_number, set the start sampler number for partial recording (default 1, must be an integer > 0) <br/>
-* filter_include, the regular expression matches the URL to Include (first filter) <br/>
-  * default all = empty (no filter)
-  * e.g. filter_include=https://mysite.com/.*
-* filter_exclude, the regular expression matches the URL to Exclude (second filter) <br/>
-  * default all = empty (no filter)
-  * e.g. filter_exclude=https://notmysite.com/.*
-  * or filter statics, filter_exclude=(?i).*\\.(bmp|css|js|gif|ico|jpe?g|png|swf|eot|otf|ttf|mp4|woff|woff2|svg)
-* remove_headers, remove a list of http headers (comma separator, case insensitive), e.g: <code>-remove_headers "User-Agent,Pragma,X-TOKEN"</code> 
-* jackson_parser_string_max, parameter to change default Jackson String length size (default empty, use the integer size value = 20000000, around 19MB)<br/>
-* ws_with_pdoornbosch, create WebSocket Sampler if HAR contains WebSocket Connection (ws or wss) and WebSocket Exchange message (default false). Need this JMeter plugin "WebSocket Samplers by Peter Doornbosch" to open generated JMeter script.
-* add_pause checkbox, add Flow Control Action Pause, parameter new_tc_pause must be > 0 (default true) <br/>
-* remove_cookie checkbox , remove header with cookie because add a Cookie Manager in the script (default true) <br/>
-* remove_cache_request checkbox, remove cache request header because add a Cache Manager in the script (default true) <br/>
-* add_result_tree_record, add to the "Test Plan" a "HTTP(S) Test Script Recorder" and "View Results Tree" to load the record_out xml file
+![Web UI Studio Dashboard](doc/images/web_ui_main.png)
 
-Status, the status line contains the tool status or the tool result.
+### Key Interface Features
+* **Zero-Setup Studio Workspace**: Access the local web app on `http://localhost:8085` (or configured Docker port).
+* **Multi-Transaction Queue**: Visual list showing each uploaded transaction step (`T01`, `T02`, `T03`, etc.), file size, and transaction order.
+* **Transaction Reordering**: Instant **Up** / **Down** move buttons to reorder transaction steps before generation.
+* **Real-Time Live Status Feedback**: Multi-phase progress indicators (local parsing, token indexing, Gemini classification, JMX synthesis).
+* **Interactive AI Insights Panel**: Displays dynamic tokens discovered, extraction paths (`JSONPath` or `Regex`), route associations, and classification badges (`CRITICAL`, `PARAMETER`, `NOISE`).
 
-e.g. : Status Results **OK**
-* Tool HAR Convertor Finished OK, fileJmxOut=C:\Temp\script1.jmx
-* Tool HAR Convertor Finished OK, fileJmxOut=C:\Temp\script1.jmx AND recordXmlOut=C:\Temp\record.xml
+---
 
-e.g. : Status Results **KO**
-* Tool HAR Convertor Finished KO, CAN'T READ HAR fileHarIn = C:\Temp\harzzzz.har
-* Tool HAR Convertor Finished KO, exception = java.util.regex.PatternSyntaxException: Unmatched closing ')' near index 2  (.))
-* Tool HAR Convertor Finished KO, exception = net.sf.saxon.trans.XPathException: Failed to create output file file:/c:/toto.jmx
+## 2. Multiple HAR Upload & Transaction Grouping
 
-### Action buttons
-* "CONVERT AND LOAD GENERATED SCRIPT", generates the JMeter script and record.xml file if set, next if no error LOAD the generated script in the current JMeter.
-* "CONVERT", generates the JMeter script and record.xml file if set.
+Performance test scenarios typically represent a multi-step user journey (e.g., *Launch Store &rarr; Browse Category &rarr; Select Pet &rarr; Login &rarr; Checkout*). The Studio natively supports uploading **multiple `.har` files simultaneously**.
 
-## Creating a har file and run the tool har-to-jmx-convertor to simulate recording from the JMeter recording template
-This tool har-to-jmx-convertor try to **simulate** a script JMeter and a record xml file recording from the **JMeter Recording Template**.
+![Upload Multiple HAR Files](doc/images/upload_multiple_har_files.png)
 
-### JMeter Recording Template and HTTP(S) Test Script Recorder  - The standard way to record
-The JMeter Recording Template : <br/>
-![JMeter recording template start](doc/images/jmeter_record_template_begin.png)
+### How to Upload
+1. **Drag and Drop**: Drag one or more `.har` files exported from your browser into the dashed drop zone.
+2. **File Explorer**: Click **"browse"** to open your native file dialog and multi-select recordings (e.g., `PetStore_T01_launchPetStore.har`, `PetStore_T02_EnterIntoPetStore.har`, etc.).
+3. **Queue Reordering**: If transactions appear in a different order, use the **Up** / **Down** controls on the queue rows to align the execution sequence.
 
-The result of recording with JMeter "HTTP(S) Test Script Recorder" : <br/>
-![JMeter script and record](doc/images/jmeter_record_template_tree_view.png)
+### Upload Limits & Validation
+* **Supported file types**: `.har` (JSON-compliant HTTP Archive recordings).
+* **Per-file limit**: Up to **25 MB** per individual `.har` file.
+* **Combined limit**: Up to **100 MB** total per conversion batch.
+* **Integrity check**: Files are checked for valid HTTP request/response entries. Empty or corrupted files are detected immediately.
 
-### HAR created on a Browser (e.g. Firefox) - The new way with the convertor tool
-Record the navigation in the web application with Developer tool : **Network** and **save** exchanges in **HAR** file format : <br/>
-![Browser save HAR file](doc/images/browser_create_har.png)
+### Automatic Transaction Controller Mapping
+When multiple `.har` files are submitted, the backend merges them into an ordered scenario. Each file is mapped into a dedicated **JMeter Transaction Controller**:
+* `PetStore_T01_launchPetStore.har` &rarr; `T01_launchPetStore`
+* `PetStore_T02_EnterIntoPetStore.har` &rarr; `T02_EnterIntoPetStore`
+* `PetStore_T03_ClickOnSignin.har` &rarr; `T03_ClickOnSignin`
+* `PetStore_T04_LoginToPetStore.har` &rarr; `T04_LoginToPetStore`
 
-Launch the "Convertor tool" : <br/>
-![Step to create script and record from HAR file](doc/images/browsers_har_convertor_script_record.png)
+All Transaction Controllers have `Generate parent sample = true` enabled, giving clear rollup metrics in JMeter listeners and dashboards.
 
-Tool results : Open the script created and the record.xml in a View Results Tree <br/>
-![Open the script created](doc/images/jmeter_script_record_created.png)
+---
 
-### Standard HAR file created with Firefox, Chrome, Edge with external csv file for transaction information
-You could add an external file that contains information about transaction name start and end.
+## 3. Conversion Modes: Standard vs AI-Powered
 
-![Step to create script and record from HAR file and external csv file](doc/images/browers_har_external_csv_convertor_script_record.png)
+The studio offers two dedicated conversion engines depending on your script requirements:
 
-The format is :
-- <code>Timestamp iso format GMT;TRANSACTION;transaction name;start</code> for starting a new transaction
-- <code>Timestamp iso format GMT;TRANSACTION;transaction name;stop</code> for ending transaction the precedent transaction
-- Separator ";"
-- Charset UTF-8
+![Standard vs AI Conversion Modes](doc/images/conversion_modes_standard_ai.png)
 
-E.g :
-<pre>
-2024-05-06T12:39:58.711Z;TRANSACTION;login;start
-2024-05-06T12:40:08.643Z;TRANSACTION;login;stop
-2024-05-06T12:40:20.880Z;TRANSACTION;home;start
-2024-05-06T12:40:37.634Z;TRANSACTION;home;stop
-</pre>
+### Option A: Standard Convert to JMX
 
-A simple tool named "create-external-file-for-har" create easily this csv file. https://github.com/vdaburon/create-external-file-for-har
-
-You need to select the csv file in the text field : "(Optional) External csv file with transaction info (to read) "
-
-### External JSON file created with "HAR Transaction Marker" from LOADMAGIC.AI
-You could add an external json file that contains information about transaction name start and end and timestamp.<br/>
-![Step to create script and record from HAR file and external json file](doc/images/browsers_har_transaction_marker_convertor_script_record.png)
-
-A Chrome plugin call "HAR Transaction Marker" from LOADMAGIC.AI, could generate an external JSON file with Transaction Names, timestamp (EPOC GMT ms), type start or stop<br/>
-![Use the "Har Transaction Marker Chrome Plugin to create Transaction Informations](doc/images/har_transaction_maker_loadmagic_ia.png)
-
-This extension at Chrome Web Store: https://chromewebstore.google.com/search/HAR%20Transaction%20Marker
-
-E.g: JSON content<br/>
-!["JSON file created  with Har Transaction Marker](doc/images/har_transaction_maker_loadmagic_ia_json.png) <br/>
-
-The JSON need at least an array of "name", "type" ("start" or "end") and timestamp format 'EPOC GMT ms' (e.g:1771835429492) and UTF-8 encoded.
-
-### HAR created with BrowserUp Proxy
-This tool is compatible with Har file generated with BrowserUp Proxy.
-
-The BrowserUp Proxy create a har and could filter url or content (no binary).
-
-The proxy client could be a browser or a client http in an application.
-
-BrowserUp Proxy could be embedded in a java application or in Selenium java code application.
-
-![Step to create script and record from HAR file from BrowserUp](doc/images/browserup-proxy_har_convertor_script_record.png)
-
-The BrowserUp Proxy **active** project is available at this url : <br/>
-[Goto the BrowserUp Proxy active project](https://github.com/valfirst/browserup-proxy)
-
-Note : The BrowserMod Proxy tool is no more active (since september 2017) and it's recommended to migrate to BrowerUp proxy https://github.com/valfirst/browserup-proxy the "valfirst" GitHub username is important.
-
-## Websocket use the plugin "WebSocket Samplers by Peter Doornbosch"
-If your Har file contains WebSocket Connection and Messages, check the checkbox <code>ws_with_pdoornbosch</code> (set true), this tool will try to create Websocket Samplers in the JMeter script generated and the exchanges in the Recording XML file if you set the record xml file name.
-
-Documentation at : https://bitbucket.org/pjtr/jmeter-websocket-samplers/src/master/
-
-The HAR is record from **Chrome** Browser not Firefox Browser and not Egde Browser (research in har file the attribute : '_webSocketMessages').
-
-Currently, limitation to only one websocket connection and multi text messages (send or receive) in this websocket connection (binary message is not tested).
-
-Text message could be on "STOMP" format (https://en.wikipedia.org/wiki/Streaming_Text_Oriented_Messaging_Protocol) or no "STOMP" (simple text).
-
-Need the plugin "WebSocket Samplers by Peter Doornbosch" to open the generated script that contain Websocket Samplers.
-
-This demonstration use the web site : https://websocket.org/tools/websocket-echo-server/
-
-![Script generated with Websocket samplers and xml record messages](doc/images/jmeter_websocket_script_and_xml_record.png)
-
-If you click on the checkbox "Create WebSocket Sampler if HAR contains WebSocket Connection" but the JMeter **have not the plugin** "WebSocket Samplers by Peter Doornbosch" a warning message is display and the button "CONVERT AND LOAD GENERATED SCRIPT" is disable.
-
-![Warning if the plugin "WebSocket Samplers by Peter Doornbosch" is not present](doc/images/har_convertor_tool_gui_check_ws_plugin.png)
-
-
-## More documentation from har-to-jmeter-convertor CLI Tool
-This plugin use a **library** from the Command Line Interface tool (har-to-jmeter-convertor)<br/>
-For more documentation look at README from [har-to-jmeter-convertor](https://github.com/vdaburon/har-to-jmeter-convertor)
-
-## Command line tool (CLI)
-This tool could be use with script shell Windows or Linux.
-
-Scripts shell are in &lt;JMETER_HOME&gt;\bin
-* har-convertor-to-jmeter.cmd for Windows OS
-* har-convertor-to-jmeter.sh for Linux/Mac OS
-
-Help to see all parameters :
-
-<pre>
-C:\apache-jmeter\bin&gt;har-convertor-to-jmeter.cmd -help
-
-usage: io.github.vdaburon.jmeter.har.HarForJMeter [-add_pause &lt;add_pause&gt;] [-add_result_tree_record
-       &lt;add_result_tree_record&gt;] [-external_file_infos &lt;external_file_infos&gt;] [-filter_exclude &lt;filter_exclude&gt;]
-       [-filter_include &lt;filter_include&gt;] -har_in &lt;har_in&gt; [-help] [-jackson_parser_string_max
-       &lt;jackson_parser_string_max&gt;] -jmx_out &lt;jmx_out&gt; [-new_tc_pause &lt;new_tc_pause&gt;] [-page_start_number
-       &lt;page_start_number&gt;] [-record_out &lt;record_out&gt;] [-remove_cache_request &lt;remove_cache_request&gt;] [-remove_cookie
-       &lt;remove_cookie&gt;] [-remove_headers &lt;remove_headers&gt;] [-sampler_start_number &lt;sampler_start_number&gt;]
-       [-ws_with_pdoornbosch &lt;ws_with_pdoornbosch&gt;]
-io.github.vdaburon.jmeter.har.HarForJMeter
- -add_pause &lt;add_pause&gt;                                   Optional boolean, add Flow Control Action Pause after
-                                                          Transaction Controller (default true)
- -add_result_tree_record &lt;add_result_tree_record&gt;         Optional boolean, add 'View Result Tree' to view the
-                                                          record.xml file created (default true), record_out must be not
-                                                          empty
- -external_file_infos &lt;external_file_infos&gt;               Optional, csv file or json file contains external infos : timestamp
-                                                          transaction name and start or end
- -filter_exclude &lt;filter_exclude&gt;                         Optional, regular expression to exclude url
- -filter_include &lt;filter_include&gt;                         Optional, regular expression to include url
- -har_in &lt;har_in&gt;                                         Har file to read (e.g : my_file.har)
- -help                                                    Help and show parameters
- -jackson_parser_string_max &lt;jackson_parser_string_max&gt;   Optional argument to increase (or decrease) the maximum
-                                                          allowed document string for the Jackson Parser library (int
-                                                          value), default is 20000000
- -jmx_out &lt;jmx_out&gt;                                       JMeter file created to write (e.g : script.jmx)
- -new_tc_pause &lt;new_tc_pause&gt;                             Optional, create new Transaction Controller after request ms,
-                                                          same as jmeter property : proxy.pause, need to be &gt; 0 if set.
-                                                          Usefully for Har created by Firefox or Single Page Application
-                                                          (Angular, ReactJS, VuesJS ...)
- -page_start_number &lt;page_start_number&gt;                   Optional, the start page number for partial recording (default
-                                                          1)
- -record_out &lt;record_out&gt;                                 Optional, file xml contains exchanges likes recorded by JMeter
- -remove_cache_request &lt;remove_cache_request&gt;             Optional boolean, remove cache header in the http request
-                                                          (default true because add a Cache Manager)
- -remove_cookie &lt;remove_cookie&gt;                           Optional boolean, remove cookie in http header (default true
-                                                          because add a Cookie Manager)
- -remove_headers &lt;remove_headers&gt;                         Remove a list of headers (comma separator, case insensitive),
-                                                          e.g:User-Agent,Pragma,X-TOKEN
- -sampler_start_number &lt;sampler_start_number&gt;             Optional, the start sampler number for partial recording
-                                                          (default 1)
- -ws_with_pdoornbosch &lt;ws_with_pdoornbosch&gt;               Optional boolean, Manage websocket messages with the JMeter
-                                                          plugin from Peter DOORNBOSH (default false), if true need the
-                                                          plugin from Peter DOORNBOSH to open the generated script
-E.g : java -jar har-for-jmeter-&lt;version&gt;-jar-with-dependencies.jar -har_in myhar.har -jmx_out scriptout.jmx -record_out
-recording.xml -add_result_tree_record true -new_tc_pause 5000 -add_pause true -filter_include "https://mysite/.*"
--filter_exclude "https://notmysite/*" -page_start_number 50 -sampler_start_number 250 -ws_with_pdoornbosch false
--remove_headers "User-Agent,Pragma"
-
-</pre>
-
-<pre>
-C:\apache-jmeter\bin>har-convertor-to-jmeter.cmd -har_in "myhar.har" -jmx_out "script_out.jmx" -filter_include "https://mysite.com/.*" -filter_exclude "https://notmysite.com/.*" -add_pause true -new_tc_pause 5000
-</pre>
-
-<pre>
-/var/opt/apache-jmeter/bin>./har-convertor-to-jmeter.sh -har_in "myhar.har" -jmx_out "script_out.jmx" -record_out "record.xml" -add_pause true -new_tc_pause 5000
-</pre>
-
-## Tool installed with jmeter-plugins-manager
-This tool could be installed with the jmeter-plugins-manager from jmeter.plugins.org.<br>
-The tool name is : "vdn@github - har-convertor-jmeter-tool"
-
-## Web Application & Docker
-
-A standalone Spring Boot web application with an interactive browser interface is available in the [`webapp/`](file:///d:/git%20projects/har-convertor-jmeter-plugin/webapp) directory. It provides:
-- **Web UI for HAR to JMX Conversion**: Drag-and-drop or upload multiple `.har` files.
-- **Scenario Schedulers**: Automatically configure Ultimate Thread Group profiles (Load, Scalability, Spike, Endurance, Stress).
-- **Correlation Candidate Analysis**: Inspects response bodies to identify dynamic values for JMeter extractors.
-- **ZIP Packaging**: Downloads generated `har-convertor-script.jmx` along with `correlation-candidates.json`.
-
-### Option 1: Run with Docker Compose (Recommended)
-
-From the project root:
-
-```bash
-docker compose up -d --build
+```
+Button: [⚡ Convert to JMX]
+Output: har-convertor-script.jmx
+Speed: < 1 second (Deterministic local processing)
 ```
 
-- Open your browser at: **<http://localhost:8080>**
-- View logs: `docker compose logs -f`
-- Stop the container: `docker compose down`
+#### What It Does
+* **Direct Fast Conversion**: Synthesizes the raw HTTP requests into JMeter `HTTPSamplerProxy` elements.
+* **Transaction Grouping**: Preserves transaction naming and step sequence inside Transaction Controllers.
+* **Domain Parameterization**: Extracts base hosts into User Defined Variables (`${ApplicationURL1}`, `${ApplicationURL2}`, etc.).
+* **Enterprise Assertions**: Injects JSR223 Groovy response & SLA assertions into every HTTP sampler.
+* **Template Integration**: Embeds pacing, think-time, and Ultimate Thread Group elements.
 
-### Option 2: Run with Docker CLI
+#### When to Choose Standard
+* When testing internal APIs with static test fixtures or pre-shared tokens.
+* When you prefer to correlate dynamic tokens manually in JMeter GUI.
+* When internet connectivity or AI API keys are unavailable.
 
-**1. Build the Docker image:**
-```bash
-docker build -t har-convertor-webapp .
+---
+
+### Option B: Gemini AI-Powered JMX Conversion
+
 ```
-*(Or build from inside the `webapp/` folder: `cd webapp && docker build -t har-convertor-webapp .`)*
-
-**2. Run the container:**
-```bash
-docker run -d -p 8080:8080 --name har-convertor-webapp har-convertor-webapp
-```
-
-**3. Run with custom configuration (e.g., custom port or JVM memory limits):**
-```bash
-docker run -d -p 9090:9090 \
-  -e PORT=9090 \
-  -e JAVA_OPTS="-Xms256m -Xmx1024m" \
-  --name har-convertor-webapp har-convertor-webapp
+Button: [✨ AI-Powered JMX]
+Output: har-convertor-script-ai.jmx
+Engine: Hybrid Local Candidate Extraction + Google Gemini AI Flash Classifier
 ```
 
-### Option 3: Run Standalone JAR (without Docker)
+#### What It Does
+Dynamic authentication tokens, bearer JWTs, session cookies, and business IDs change on every execution. The AI engine discovers and correlates these dynamic tokens automatically across downstream requests through a **3-stage pipeline**:
 
-Requires Java 17+:
+```mermaid
+flowchart LR
+    A["Stage 1: Local Scan<br/>(0 Tokens Consumed)"] --> B["Stage 2: Gemini AI Flash<br/>(~300 Micro-Tokens)"]
+    B --> C["Stage 3: Auto-Injection<br/>(JMeter Script .jmx)"]
+```
+
+1. **Stage 1 &mdash; Local Candidate Discovery (Zero Tokens Consumed)**:
+   * The backend scans all response bodies (JSON and HTML) across all HAR transactions for candidate dynamic values (alphanumeric tokens &ge; 8 characters, numeric IDs &ge; 6 digits, UUIDs, JWT headers `eyJ...`).
+   * It cross-references downstream request headers, query parameters, and JSON payloads to find exact matches.
+   * Resolves token paths (`JSONPath` expressions such as `$.data.token` or boundary regexes).
+
+2. **Stage 2 &mdash; Gemini AI Classification & Noise Filtering**:
+   * A compact payload (~300 tokens) is sent to **Gemini 1.5 Flash**.
+   * Gemini classifies candidates into three strategic categories:
+     * 🛡️ **`CRITICAL` (Auth / Security)**: Bearer tokens, JWTs, OAuth authorization codes, CSRF tokens (`_csrf`, `authenticity_token`), Session IDs (`JSESSIONID`, `PHPSESSID`). *Auto-correlated.*
+     * 📦 **`PARAMETER` (Business Entities)**: Order IDs, Cart IDs, Customer/Account numbers created in earlier steps and reused downstream. *Auto-correlated.*
+     * 🔇 **`NOISE` (Telemetry & Analytics)**: Google Analytics (`_ga`, `_gid`), DoubleClick, Datadog/Sentry beacons, New Relic pings, cache-busting timestamps. *Filtered out to keep scripts clean.*
+
+3. **Stage 3 &mdash; Auto-Injection into JMX**:
+   * Injects `JSONPostProcessor` (for JSON responses) or `RegexExtractor` (for HTML/text) on the source HTTP sampler.
+   * Variables are assigned clean naming: `${C_bearerToken}`, `${C_csrfToken}`, `${C_sessionId}`, `${C_orderId}`.
+   * Downstream samplers, URLs, request headers, and payloads have raw values replaced with the variable reference `${C_varName}`.
+   * Displays the **AI Correlation Insights** panel in the Web UI:
+
+```
+✨ AI Analysis Complete: Automatically correlated 5 dynamic variables and ignored 12 analytics/tracking tokens.
+  [✓] C_bearerToken   | CRITICAL  | JSON: $.auth.token  | T01_Login -> T02_UserProfile
+  [✓] C_csrfToken     | CRITICAL  | Regex               | T01_Login -> T03_UpdateCart
+  [✓] C_orderId       | PARAMETER | JSON: $.order.id    | T03_Checkout -> T04_Confirmation
+  [ ] _ga_UA12345     | NOISE     | Filtered            | Ignored tracking pixel
+```
+
+---
+
+### Feature Comparison Matrix
+
+| Feature | Standard Convert (`⚡`) | AI-Powered JMX (`✨`) |
+|---|:---:|:---:|
+| **Processing Speed** | Instant (< 1s) | Fast (~2 to 3s) |
+| **Transaction Controllers Created** | ✅ Yes | ✅ Yes |
+| **Domain Parameterization (`${ApplicationURL}`)** | ✅ Yes | ✅ Yes |
+| **JSR223 Groovy Assertions (SLA + APM)** | ✅ Yes | ✅ Yes |
+| **Workload Schedule (Ultimate Thread Group)** | ✅ Yes | ✅ Yes |
+| **Dynamic Token Discovery** | ❌ Manual | ✅ Automatic |
+| **JSONPath Extractor Injection** | ❌ Manual | ✅ Automatic (`JSONPostProcessor`) |
+| **Regex Extractor Injection** | ❌ Manual | ✅ Automatic (`RegexExtractor`) |
+| **Downstream Variable Replacement** | ❌ Manual | ✅ Automatic (`${C_token}`) |
+| **Noise & Analytics Filtering** | ❌ Manual | ✅ Automatic (Google Analytics, Sentry, etc.) |
+| **Requires Gemini API Key** | ❌ No | ⚠️ Optional (has built-in heuristic fallback) |
+
+---
+
+## 4. Under The Hood: How Conversion Works
+
+### Rules & Best Practices to Record Clean .HAR Files
+
+To ensure the highest script quality and avoid false positives during correlation, follow these recording rules:
+
+1. **Use an Incognito / Private Window**:
+   * Eliminates cached cookies, saved sessions, and background browser extensions (e.g., password managers, ad-blockers) from polluting the network log.
+2. **Open Developer Tools (`F12`) & Navigate to the Network Tab**:
+   * Make sure the record button (red dot) is active.
+3. **Enable "Preserve Log"**:
+   * Prevents DevTools from clearing traffic upon HTTP 302 redirects or page reloads.
+4. **Enable "Disable Cache"**:
+   * Forces the browser to download all dynamic assets and API responses realistically, simulating a fresh user session.
+5. **Record Transaction by Transaction**:
+   * Clear the network log (trash/clear icon) before initiating an action.
+   * Perform the action (e.g., click *Sign In*).
+   * Wait for network traffic to settle.
+   * Right-click any network entry &rarr; select **"Save all as HAR with content"**.
+   * Name your file with sequential transaction identifiers:
+     * `App_T01_OpenHome.har`
+     * `App_T02_SearchProduct.har`
+     * `App_T03_AddToCart.har`
+     * `App_T04_Checkout.har`
+6. **Always Save "With Content"**:
+   * JMeter correlation and assertion generation require HTTP response bodies. Do not export HAR files without response payloads.
+
+---
+
+### Transaction Structure & Domain Parameterization
+
+When files are processed, the converter enforces strict load testing best practices:
+
+```mermaid
+graph TD
+    subgraph TestPlan["JMeter Test Plan (Generated)"]
+        subgraph UDV["User Defined Variables"]
+            V1["ApplicationURL1 = ${__P(ApplicationURL1, petstore.octoperf.com)}"]
+            V2["v_AcceptableRespTime = 5000"]
+            V3["StartupTime, TestDuration, ShutDownTime"]
+        end
+        subgraph UTG["Ultimate Thread Group (BaseTestTamplet)"]
+            MC1["ModuleController: SaveItrateStartTime"]
+            subgraph TC1["Transaction Controller: T01_launchPetStore"]
+                S1["HTTPSampler: GET /actions/Catalog.action<br/>Domain: ${ApplicationURL1}"]
+                A1["JSR223 Assertion (Status + SLA + Grafana)"]
+                S1 --> A1
+            end
+            MC2["ModuleController: ThinkTime"]
+            subgraph TC2["Transaction Controller: T02_LoginToPetStore"]
+                S2["HTTPSampler: POST /actions/Account.action<br/>Domain: ${ApplicationURL1}"]
+                E1["JSONPostProcessor: C_sessionId = $.sessionId"]
+                A2["JSR223 Assertion (Status + SLA + Grafana)"]
+                S2 --> E1
+                E1 --> A2
+            end
+            MC3["ModuleController: LogController"]
+            MC4["ModuleController: PaceTime"]
+        end
+    end
+    UDV --> UTG
+    MC1 --> TC1
+    TC1 --> MC2
+    MC2 --> TC2
+    TC2 --> MC3
+    MC3 --> MC4
+```
+
+1. **Host Extraction**: All distinct server hostnames are extracted and replaced with configurable variables:
+   * `https://api.example.com/v1/auth` &rarr; `HTTPSampler.domain = ${ApplicationURL1}`
+   * In User Defined Variables: `ApplicationURL1 = ${__P(ApplicationURL1, api.example.com)}`. This allows overriding environments at runtime via CLI (e.g., `-JApplicationURL1=staging.example.com`).
+2. **Redirect Strategy**: Automatically sets `follow_redirects = true` for safe navigation while handling 302 redirects without infinite loops (`auto_redirects = false`).
+3. **Pacing and Think Time**: Seamlessly incorporates modular pacing controllers (`PaceTime`, `PaceingInterval`) and user delay controllers (`ThinkTime`).
+
+---
+
+### Automated JSR223 Groovy Assertions Engine
+
+Every generated HTTP Sampler is equipped with an automated **JSR223 Groovy Assertion**. This assertion provides 4 core validation layers without manual scripting:
+
+```groovy
+String TXN_NAME = "T01_launchPetStore"
+String TEXT_CHECK = "Catalog"
+String TEXT_CHECK1 = "Fish"
+
+Set<String> OK_CODES = ["200", "201", "202", "204", "302"] as Set
+int MAX_ERR_LEN = 500
+
+String ST_PASS = "Pass"
+String ST_SLOW = "Slow"
+String ST_FAIL = "Fail"
+
+String responseCode = prev.getResponseCode() ?: ""
+String response = prev.getResponseDataAsString() ?: ""
+
+// Strip characters that break Grafana ingestion
+for (String ch : ['\r', '\n', ',', '-', '?', "'", '{', '}', '/', '"']) {
+    response = response.replace(ch, "")
+}
+
+long loadTime = prev.getTime()
+vars.put("LoadTime", String.valueOf(loadTime))
+
+long acceptableRespTime = Long.MAX_VALUE
+try {
+    acceptableRespTime = Long.parseLong(vars.get("v_AcceptableRespTime") ?: "")
+} catch (NumberFormatException e) {
+    log.warn("v_AcceptableRespTime missing or not numeric, skipping slow check")
+}
+
+// Fields logged to Grafana / APM
+vars.put("TransactionName", TXN_NAME)
+vars.put("ResponseCode", responseCode)
+vars.put("UniqueIdentifier", "Application ID: " + (vars.get("C_ApplicationID") ?: "NA"))
+vars.put("ErrorMsg", "NA")
+
+boolean codeOk = OK_CODES.contains(responseCode.trim())
+boolean textOk = (TEXT_CHECK.isEmpty() || TEXT_CHECK.equals("NotFoundResponseData") || response.contains(TEXT_CHECK)) &&
+                 (TEXT_CHECK1.isEmpty() || TEXT_CHECK1.equals("NotFoundResponseData") || response.contains(TEXT_CHECK1))
+
+if (codeOk && textOk) {
+    if (loadTime > acceptableRespTime) {
+        vars.put("status", ST_SLOW)
+        vars.put("ErrorMsg", "ResponseTime " + loadTime + " ms higher than " + acceptableRespTime + " ms")
+    } else {
+        vars.put("status", ST_PASS)
+    }
+    AssertionResult.setFailure(false)
+} else {
+    String msg
+    if (responseCode.contains("Non HTTP response code")) {
+        vars.put("ResponseCode", "ReceivedNonHTTPResponseCode")
+        msg = "ReceivedNonHTTPResponseCode"
+    } else if (!codeOk) {
+        msg = "Unexpected response code: " + responseCode
+    } else {
+        msg = "Expected text not found: " + TEXT_CHECK + " / " + TEXT_CHECK1
+    }
+    vars.put("ErrorMsg", msg)
+    vars.put("status", ST_FAIL)
+    AssertionResult.setFailure(true)
+    AssertionResult.setFailureMessage(msg)
+}
+```
+
+#### What the Assertion Validates:
+1. **HTTP Status Code Validation**:
+   * Ensures the response code is within valid HTTP codes (`200`, `201`, `202`, `204`, `302`).
+   * Catches network/DNS drops (`Non HTTP response code`) and marks them cleanly.
+2. **Dual Dynamic Content Verification (`TEXT_CHECK`, `TEXT_CHECK1`)**:
+   * Automatically identifies two non-stopword tokens from the recorded response (e.g., page titles, JSON status keys, button text).
+   * Validates that the server returned meaningful business content rather than an empty 200 OK error page.
+3. **SLA & Response Time Thresholds (`ST_SLOW`)**:
+   * Checks `prev.getTime()` against `${v_AcceptableRespTime}` (default: 5000 ms).
+   * Categorizes transactions as `Slow` if response time breaches SLA thresholds while keeping the assertion passing if data was valid.
+4. **Grafana & APM Metrics Sanitization**:
+   * Removes problematic delimiters (`\r`, `\n`, quotes, brackets) so response strings and error details can be ingested into **Grafana, InfluxDB, Prometheus, or Elasticsearch** without breaking log parsers.
+
+---
+
+## 5. End-to-End Architecture
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Performance Engineer
+    participant Browser as Browser (Chrome/Firefox/Edge)
+    participant UI as Studio Web UI (app.js)
+    participant Controller as Spring Boot Controller
+    participant Service as HarConversionService
+    participant Gemini as Google Gemini AI (Flash)
+    participant Generator as JMeter JMX Synthesizer
+
+    Note over User, Browser: Phase 1: Recording Navigation
+    User->>Browser: Perform user steps with DevTools open (Preserve Log)
+    Browser-->>User: Save as HAR with content (T01.har, T02.har...)
+
+    Note over User, UI: Phase 2: Upload & Queue Management
+    User->>UI: Drag & drop HAR files onto Studio
+    UI->>UI: Natural sorting, reordering controls, size validation
+
+    alt Click [⚡ Convert to JMX] (Standard Mode)
+        UI->>Controller: POST /api/convert (HAR files)
+        Controller->>Service: convert(...)
+        Service->>Generator: Synthesize samplers, controllers, JSR223 assertions
+        Generator-->>Controller: har-convertor-script.jmx
+        Controller-->>UI: Download JMX File
+        UI-->>User: Download complete
+    else Click [✨ AI-Powered JMX] (AI Mode)
+        UI->>Controller: POST /api/analyze (HAR files)
+        Controller->>Service: analyze(files)
+        Service->>Service: Scan response bodies & index candidate tokens
+        Service-->>Controller: Return candidate tokens list
+        Controller-->>UI: JSON candidates
+        UI->>Gemini: POST /models/gemini-1.5-flash (~300 tokens)
+        Gemini-->>UI: Classification (CRITICAL, PARAMETER, NOISE)
+        UI->>UI: Render AI Insights Panel & recommended IDs
+        UI->>Controller: POST /api/convert (HAR files + recommended correlation IDs)
+        Controller->>Service: Apply JSONPostProcessor / RegexExtractor & downstream replacements
+        Service->>Generator: Finalize JMX with base template & thread group
+        Generator-->>Controller: har-convertor-script-ai.jmx
+        Controller-->>UI: Download Correlated JMX File
+        UI-->>User: Download complete with correlated script!
+    end
+```
+
+---
+
+## 6. Quick Start Guide
+
+### Option 1: Run Pre-Built Image from Docker Hub (Fastest)
+
+Run directly with Docker without compiling:
+
+```bash
+docker run -d -p 8085:8080 \
+  -e GEMINI_API_KEY="your-gemini-api-key" \
+  --name har-convertor \
+  khaja7289/hartojmx:latest
+```
+
+* **Web UI URL**: [http://localhost:8085](http://localhost:8085)
+* **Docker Hub Repository**: [khaja7289/hartojmx](https://hub.docker.com/repository/docker/khaja7289/hartojmx/general)
+
+---
+
+### Option 2: Run with Docker Compose
+
+Clone the repository and launch the containerized application:
+
+```bash
+git clone https://github.com/vdaburon/har-convertor-jmeter-plugin.git
+cd har-convertor-jmeter-plugin
+docker compose up -d
+```
+
+* **Web UI URL**: [http://localhost:8085](http://localhost:8085)
+* **View Logs**: `docker compose logs -f`
+* **Stop Container**: `docker compose down`
+
+To configure your **Google Gemini API Key** for server-side AI correlation, set it in [docker-compose.yml](file:///d:/git%20projects/har-convertor-jmeter-plugin/docker-compose.yml):
+
+```yaml
+environment:
+  - PORT=8080
+  - GEMINI_API_KEY=AIzaSyYourActualGeminiApiKeyHere
+```
+
+---
+
+### Run Standalone JAR
+
+Requires **Java 17+** and **Maven**:
 
 ```bash
 cd webapp
-mvn clean package
+mvn clean package -DskipTests
 java -jar target/har-convertor-webapp-10.0.0.jar
 ```
 
-### Environment Variables
+The web server will start on `http://localhost:8080` (or the port defined by `PORT`).
+
+---
+
+### Run as JMeter GUI Plugin or CLI
+
+#### 1. JMeter GUI Plugin
+Install via the **JMeter Plugins Manager**:
+1. Open JMeter &rarr; **Options** &rarr; **Plugins Manager**.
+2. Search for `vdn@github - har-convertor-jmeter-tool`.
+3. Click **Apply Changes and Restart JMeter**.
+4. Open the plugin via: **Tools &rarr; vdn@github - HAR Convertor Tool**.
+
+![JMeter Menu Tools](doc/images/jmeter_menu_tools_with_har_convertor.png)
+
+#### 2. Command Line Interface (CLI)
+Automate script generation via shell scripts in `<JMETER_HOME>/bin`:
+
+* **Windows**:
+  ```cmd
+  har-convertor-to-jmeter.cmd -har_in "recording.har" -jmx_out "output.jmx" -add_pause true -new_tc_pause 5000
+  ```
+* **Linux / macOS**:
+  ```bash
+  ./har-convertor-to-jmeter.sh -har_in "recording.har" -jmx_out "output.jmx" -add_pause true -new_tc_pause 5000
+  ```
+
+---
+
+## 7. Configuration & Environment Variables
 
 | Variable | Default | Description |
 |---|---|---|
-| `PORT` | `8080` | Port on which the Spring Boot web server listens |
-| `JAVA_OPTS` | `-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0` | JVM runtime flags and memory limits |
-| `FORWARD_HEADERS_STRATEGY` | `none` | Set to `framework` when deployed behind a trusted reverse proxy |
+| `PORT` | `8080` | Internal HTTP listening port for Spring Boot. |
+| `GEMINI_API_KEY` | *(empty)* | Optional Gemini API key for automated AI token correlation. If unset, the browser fallback heuristic operates with 0 token consumption. |
+| `JAVA_OPTS` | `-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0` | JVM flags and memory allocations. |
+| `FORWARD_HEADERS_STRATEGY` | `none` | Set to `framework` when deployed behind reverse proxies (Nginx, Traefik, AWS ALB). |
 
-For additional details on deployment and rate limiting, see [`webapp/README.md`](file:///d:/git%20projects/har-convertor-jmeter-plugin/webapp/README.md).
+---
 
-## Usage Maven
-The maven groupId, artifactId and version, this plugin is in the **Maven Central Repository** [![Maven Central](https://img.shields.io/maven-central/v/io.github.vdaburon/har-convertor-jmeter-plugin)](https://central.sonatype.com/artifact/io.github.vdaburon/har-convertor-jmeter-plugin)
+## 8. Release Notes
 
-```xml
-<groupId>io.github.vdaburon</groupId>
-<artifactId>har-convertor-jmeter-plugin</artifactId>
-<version>10.0</version>
-```
+* **v10.0**: Added interactive Spring Boot Web UI Studio (`webapp`), multi-HAR transaction upload with drag-and-drop, automated Gemini AI token correlation, JSR223 Groovy Assertions engine with APM/Grafana sanitization, and Docker support.
+* **v9.1 - 9.0**: Optimized Jackson parser buffer sizes (`jackson_parser_string_max`), upgraded Saxon-HE engine to 12.3+, removed deprecated browser extension hooks.
+* **v8.0**: Added `-remove_headers` parameter to strip volatile HTTP request headers.
+* **v7.0**: Added WebSocket sampling support using Peter Doornbosch's WebSocket Samplers plugin.
+* **v5.0 - 6.0**: Added Transaction Controller creation from external CSV/JSON marker files, and integrated Results Tree recording XML viewers.
+
+---
+
+## 9. References & Upstream Library
+
+This plugin and web studio build upon and integrate the following open-source projects:
+
+* **[har-to-jmeter-convertor](https://github.com/vdaburon/har-to-jmeter-convertor)**: The core conversion engine and CLI tool developed by Vincent Daburon that powers the HAR parsing and JMX XML generation.
+* **[DZone Technical Article: Convert a HAR file to JMeter script](https://dzone.com/articles/convert-a-har-file-to-jmeter-script)**: Author's in-depth article covering the motivations, architecture, and methodology.
+* **[create-external-file-for-har](https://github.com/vdaburon/create-external-file-for-har)**: Helper utility for generating transaction marker CSVs from HAR recordings.
+* **[WebSocket Samplers by Peter Doornbosch](https://bitbucket.org/pjtr/jmeter-websocket-samplers/src/master/)**: Used for generating WebSocket protocol samplers in JMeter.
+
+---
 
 ## License
-Licensed under the Apache License, Version 2.0
 
-## Versions
-Version 10.0 date 2026-02-24, Use new library har-to-jmeter-convertor 10.0, external file could be a JSON file created with "HAR Transaction Marker" Chrome Plugin from LOADMAGIC.AI or a CSV file.
-
-Version 9.1 date 2026-02-04, Use new library har-to-jmeter-convertor 9.1 remove parameter use_lrwr_infos because the LoadRunner plugin HarGeneratorChrome for Chrome doesn't work with new Chrome security for plugins. Modify pom.xml to exclude jackson and commons-lang3 libraries. This plugin need Saxon-HE>=12.3 for better Performance.
-
-Version 9.0 date 2026-02-03, Use new library har-to-jmeter-convertor 9.0 add new parameter -jackson_parser_string_max to change default Jackson String length size (default integer size = 20000000).
-
-Version 8.0 date 2025-11-22, Use new library har-to-jmeter-convertor 8.0 add new parameter <code>-remove_headers</code> remove a list of http headers (comma separator, case insensitive), e.g: <code>-remove_headers "User-Agent,Pragma,X-TOKEN"</code>
-
-Version 7.1 date 2025-03-27, Use new library har-to-jmeter-convertor 7.1 remove request headers from HTTP/2, these headers start with ':' likes ":authority", ":method", ":path" or ":scheme" correct Issue #2. Don't create HttpSampler for url "data:".
-
-Version 7.0 date 2025-02-27, Use new library har-to-jmeter-convertor 7.0 add manage the websocket messages with 'WebSocket Samplers by Peter Doornbosch', add checkbox for boolean parameter 'ws_with_pdoornbosch' (default unchecked == false).
-
-Version 6.1 date 2025-01-28, Use new library har-to-jmeter-convertor 6.1 to correct a NullPointerException when creating the Recording XML file.
-
-Version 6.0 date 2024-09-19, Use new library har-to-jmeter-convertor 6.0 for adding 'HTTP(S) Test Script Recorder' and 'View Results Tree' to view the Record.xml file created. Correct save file no url encoded name.
-
-Version 5.3 date 2024-09-13, Use new library har-to-jmeter-convertor 5.3 that correct PUT with no parameter, no content and mime-type ==  null
-
-Version 5.2 date 2024-06-20, Use new library har-to-jmeter-convertor 5.2 that correct extract parameters for mime type "form-urlencoded" ended with charset likes "application/x-www-form-urlencoded; charset=xxx"
-
-Version 5.1 date 2024-05-17, Compatible with har generated by browsermob-proxy tool and csv file contains transaction infos. Use library har-to-jmeter-convertor 5.1.
-
-Version 5.0 date 2024-05-10, Add an external csv file with transaction information for JMeter Transaction Controller Name. New parameter : <code>-external_file_infos transaction_info.csv</code>. Correct Filter Include first filter and Filter Exclude second filter.
-
-Version 4.0 date 2024-05-06, Add compatibility with HAR generated with LoadRunner Web Recorder Chrome Extension. New checkbox "(Optional) HAR was generated with LoadRunner Web Recorder and Transaction Names"
-
-Version 3.2 date 2024-03-30, Use library har-to-jmeter-convertor-2.2.jar, this version encode value for x-www-form-urlencoded when value contains space ' ' or equal '=' or slash '/' or plus '+' characters. Correct add the content for body data for POST, PUT or PATCH if not x-www-form-urlencoded in the Record.xml file.
-
-Version 3.1 date 2024-03-29, Use library har-to-jmeter-convertor-2.2.jar, this version remove the header 'Content-length' because the length is computed by JMeter when the request is created. POST or PUT could have query string and body with content so add query string to the path. Set Content Encoding to UFT-8 for POST or PUT method and request Content-Type : application/json. Add body data content in record.xml for PUT and PATCH methods.
-
-Version 3.0 date 2024-03-18, Add Load generated script if no error. File Chooser select only file and no directory.
-
-Version 2.0 date 2024-03-12, for POST multipart/form-data don't put the content of the file in the Record.xml file because binary content could be large and not XML compatible. Add parameters : page_start_number and sampler_start_number to facilitate partial recording of website navigation.
-
-Version 1.0 date 2024-03-11, First Release.
-
+Licensed under the **Apache License, Version 2.0**. You may freely use, modify, and distribute this software for commercial and private use.

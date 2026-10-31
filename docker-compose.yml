@@ -5,17 +5,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: har-convertor-webapp:latest
+    image: khaja7289/hartojmx:latest
     container_name: har-convertor-webapp
     ports:
-      - "8080:8080"
+      - "8085:8080"
     environment:
       - PORT=8080
       - FORWARD_HEADERS_STRATEGY=none
       - JAVA_OPTS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0
+      - GEMINI_API_KEY=Use your own GEMINI_API_KEY
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/" ]
       interval: 30s
       timeout: 5s
       retries: 3

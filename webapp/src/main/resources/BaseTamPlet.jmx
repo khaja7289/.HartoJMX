@@ -1,0 +1,1409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan">
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <CacheManager guiclass="CacheManagerGui" testclass="CacheManager" testname="HTTP Cache Manager">
+        <boolProp name="clearEachIteration">true</boolProp>
+        <boolProp name="useExpires">true</boolProp>
+        <boolProp name="CacheManager.controlledByThread">false</boolProp>
+      </CacheManager>
+      <hashTree/>
+      <CookieManager guiclass="CookiePanel" testclass="CookieManager" testname="HTTP CookieManager">
+        <collectionProp name="CookieManager.cookies"/>
+        <stringProp name="TestPlan.comments">Created from cURL on 2026-10-15T22:07:00.7460542</stringProp>
+        <boolProp name="CookieManager.clearEachIteration">true</boolProp>
+        <boolProp name="CookieManager.controlledByThreadGroup">false</boolProp>
+      </CookieManager>
+      <hashTree/>
+      <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="ShutDownTime" elementType="Argument">
+            <stringProp name="Argument.name">ShutDownTime</stringProp>
+            <stringProp name="Argument.value">10</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="TestDuration" elementType="Argument">
+            <stringProp name="Argument.name">TestDuration</stringProp>
+            <stringProp name="Argument.value">600</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="StartupTime" elementType="Argument">
+            <stringProp name="Argument.name">StartupTime</stringProp>
+            <stringProp name="Argument.value">5</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="ApplicationURL1" elementType="Argument">
+            <stringProp name="Argument.name">ApplicationURL1</stringProp>
+            <stringProp name="Argument.value">${__P(ApplicationURL1,www.google.com)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="ApplicationURL2" elementType="Argument">
+            <stringProp name="Argument.name">ApplicationURL2</stringProp>
+            <stringProp name="Argument.value">${__P(ApplicationURL2,mail.google.com)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="v_AcceptableRespTime" elementType="Argument">
+            <stringProp name="Argument.name">v_AcceptableRespTime</stringProp>
+            <stringProp name="Argument.value">5000</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </Arguments>
+      <hashTree/>
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults">
+        <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+          <collectionProp name="Arguments.arguments"/>
+        </elementProp>
+        <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+      </ConfigTestElement>
+      <hashTree/>
+      <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="WLM">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="Test_Users" elementType="Argument">
+            <stringProp name="Argument.name">Test_Users</stringProp>
+            <stringProp name="Argument.value">1</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="Test_TPH" elementType="Argument">
+            <stringProp name="Argument.name">Test_TPH</stringProp>
+            <stringProp name="Argument.value">10</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </Arguments>
+      <hashTree/>
+      <kg.apc.jmeter.threads.UltimateThreadGroup guiclass="kg.apc.jmeter.threads.UltimateThreadGroupGui" testclass="kg.apc.jmeter.threads.UltimateThreadGroup" testname="BaseTestTamplet">
+        <collectionProp name="ultimatethreadgroupdata">
+          <collectionProp name="1844437372">
+            <stringProp name="1586624139">${Test_Users}</stringProp>
+            <stringProp name="0">0</stringProp>
+            <stringProp name="-337860278">${StartupTime}</stringProp>
+            <stringProp name="523912544">${TestDuration}</stringProp>
+            <stringProp name="523912544">${ShutDownTime}</stringProp>
+          </collectionProp>
+        </collectionProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <intProp name="LoopController.loops">-1</intProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+      </kg.apc.jmeter.threads.UltimateThreadGroup>
+      <hashTree>
+        <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="SaveItrateStartTime">
+          <collectionProp name="ModuleController.node_path">
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="170071582">Test Fragment</stringProp>
+            <stringProp name="-971294028">PaceingInterval</stringProp>
+          </collectionProp>
+        </ModuleController>
+        <hashTree/>
+        <TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="Tarnsaction1" enabled="true">
+          <boolProp name="TransactionController.parent">true</boolProp>
+          <boolProp name="TransactionController.includeTimers">false</boolProp>
+        </TransactionController>
+        <hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request" enabled="true">
+            <stringProp name="TestPlan.comments">Created from cURL on 2026-10-15T22:07:00.7410774</stringProp>
+            <stringProp name="HTTPSampler.domain">${ApplicationURL1}</stringProp>
+            <stringProp name="HTTPSampler.protocol">https</stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+            <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP HeaderManager" enabled="true">
+              <collectionProp name="HeaderManager.headers">
+                <elementProp name="accept" elementType="Header">
+                  <stringProp name="Header.name">accept</stringProp>
+                  <stringProp name="Header.value">text/html,application/xhtml+xml,application/xml;q=0.9,image/jxl,image/avif,image/webp,image/apng,*/*;q=0.8</stringProp>
+                </elementProp>
+                <elementProp name="accept-language" elementType="Header">
+                  <stringProp name="Header.name">accept-language</stringProp>
+                  <stringProp name="Header.value">en-US,en;q=0.9</stringProp>
+                </elementProp>
+                <elementProp name="downlink" elementType="Header">
+                  <stringProp name="Header.name">downlink</stringProp>
+                  <stringProp name="Header.value">10</stringProp>
+                </elementProp>
+                <elementProp name="priority" elementType="Header">
+                  <stringProp name="Header.name">priority</stringProp>
+                  <stringProp name="Header.value">u=4, i</stringProp>
+                </elementProp>
+                <elementProp name="referer" elementType="Header">
+                  <stringProp name="Header.name">referer</stringProp>
+                  <stringProp name="Header.value">https://${ApplicationURL1}/</stringProp>
+                </elementProp>
+                <elementProp name="rtt" elementType="Header">
+                  <stringProp name="Header.name">rtt</stringProp>
+                  <stringProp name="Header.value">50</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua</stringProp>
+                  <stringProp name="Header.value">&quot;Google Chrome&quot;;v=&quot;155&quot;, &quot;Chromium&quot;;v=&quot;155&quot;, &quot;Not(A:Brand&quot;;v=&quot;24&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-arch" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-arch</stringProp>
+                  <stringProp name="Header.value">&quot;x86&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-bitness" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-bitness</stringProp>
+                  <stringProp name="Header.value">&quot;64&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-form-factors" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-form-factors</stringProp>
+                  <stringProp name="Header.value">&quot;Desktop&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-full-version" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-full-version</stringProp>
+                  <stringProp name="Header.value">&quot;155.0.8059.39&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-full-version-list" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-full-version-list</stringProp>
+                  <stringProp name="Header.value">&quot;Google Chrome&quot;;v=&quot;155.0.8059.39&quot;, &quot;Chromium&quot;;v=&quot;155.0.8059.39&quot;, &quot;Not(A:Brand&quot;;v=&quot;24.0.0.0&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-mobile" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-mobile</stringProp>
+                  <stringProp name="Header.value">?0</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-model" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-model</stringProp>
+                  <stringProp name="Header.value">&quot;&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-platform" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-platform</stringProp>
+                  <stringProp name="Header.value">&quot;Windows&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-platform-version" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-platform-version</stringProp>
+                  <stringProp name="Header.value">&quot;19.0.0&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-wow64" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-wow64</stringProp>
+                  <stringProp name="Header.value">?0</stringProp>
+                </elementProp>
+                <elementProp name="sec-fetch-dest" elementType="Header">
+                  <stringProp name="Header.name">sec-fetch-dest</stringProp>
+                  <stringProp name="Header.value">document</stringProp>
+                </elementProp>
+                <elementProp name="sec-fetch-mode" elementType="Header">
+                  <stringProp name="Header.name">sec-fetch-mode</stringProp>
+                  <stringProp name="Header.value">navigate</stringProp>
+                </elementProp>
+                <elementProp name="sec-fetch-site" elementType="Header">
+                  <stringProp name="Header.name">sec-fetch-site</stringProp>
+                  <stringProp name="Header.value">none</stringProp>
+                </elementProp>
+                <elementProp name="sec-purpose" elementType="Header">
+                  <stringProp name="Header.name">sec-purpose</stringProp>
+                  <stringProp name="Header.value">prefetch</stringProp>
+                </elementProp>
+                <elementProp name="sec-speculation-tags" elementType="Header">
+                  <stringProp name="Header.name">sec-speculation-tags</stringProp>
+                  <stringProp name="Header.value">null</stringProp>
+                </elementProp>
+                <elementProp name="upgrade-insecure-requests" elementType="Header">
+                  <stringProp name="Header.name">upgrade-insecure-requests</stringProp>
+                  <stringProp name="Header.value">1</stringProp>
+                </elementProp>
+                <elementProp name="user-agent" elementType="Header">
+                  <stringProp name="Header.name">user-agent</stringProp>
+                  <stringProp name="Header.value">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36</stringProp>
+                </elementProp>
+                <elementProp name="x-browser-channel" elementType="Header">
+                  <stringProp name="Header.name">x-browser-channel</stringProp>
+                  <stringProp name="Header.value">stable</stringProp>
+                </elementProp>
+                <elementProp name="x-browser-copyright" elementType="Header">
+                  <stringProp name="Header.name">x-browser-copyright</stringProp>
+                  <stringProp name="Header.value">Copyright 2026 Google LLC. All Rights Reserved.</stringProp>
+                </elementProp>
+                <elementProp name="x-browser-validation" elementType="Header">
+                  <stringProp name="Header.name">x-browser-validation</stringProp>
+                  <stringProp name="Header.value">PHV9Kd1t5Di1L3anF4wYYYkjIos=</stringProp>
+                </elementProp>
+                <elementProp name="x-browser-year" elementType="Header">
+                  <stringProp name="Header.name">x-browser-year</stringProp>
+                  <stringProp name="Header.value">2026</stringProp>
+                </elementProp>
+                <elementProp name="x-client-data" elementType="Header">
+                  <stringProp name="Header.name">x-client-data</stringProp>
+                  <stringProp name="Header.value">CKmdygEIk6HLAQiFoM0BCJfnlDAI1+iUMAjE75Qw</stringProp>
+                </elementProp>
+              </collectionProp>
+              <stringProp name="TestPlan.comments">Created from cURL on 2026-10-15T22:07:00.7410774</stringProp>
+            </HeaderManager>
+            <hashTree/>
+            <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="JSR223 Assertion" enabled="true">
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="script">String TXN_NAME = &quot;Tarnsaction1&quot;
+String TEXT_CHECK = &quot;submit&quot;
+String TEXT_CHECK1 = &quot;function&quot;
+
+Set&lt;String&gt; OK_CODES = [&quot;200&quot;, &quot;201&quot;, &quot;202&quot;, &quot;204&quot;, &quot;302&quot;] as Set
+int MAX_ERR_LEN = 500
+
+// Status values
+String ST_PASS = &quot;Pass&quot;
+String ST_SLOW = &quot;Slow&quot;
+String ST_FAIL = &quot;Fail&quot;
+
+// Response data
+String responseCode = prev.getResponseCode() ?: &quot;&quot;
+String response = prev.getResponseDataAsString() ?: &quot;&quot;
+
+// Strip characters that break Grafana ingestion
+for (String ch : [&apos;\r&apos;, &apos;\n&apos;, &apos;,&apos;, &apos;-&apos;, &apos;?&apos;, &quot;&apos;&quot;, &apos;{&apos;, &apos;}&apos;, &apos;/&apos;, &apos;&quot;&apos;]) {
+    response = response.replace(ch, &quot;&quot;)
+}
+
+// Load time and threshold
+long loadTime = prev.getTime()
+vars.put(&quot;LoadTime&quot;, String.valueOf(loadTime))
+
+long acceptableRespTime = Long.MAX_VALUE
+try {
+    acceptableRespTime = Long.parseLong(
+        vars.get(&quot;v_AcceptableRespTime&quot;) ?: &quot;&quot;
+    )
+} catch (NumberFormatException e) {
+    log.warn(&quot;v_AcceptableRespTime missing or not numeric, skipping slow check&quot;)
+}
+
+// Fields logged to Grafana
+String errShort = response.length() &gt; MAX_ERR_LEN
+    ? response.substring(0, MAX_ERR_LEN)
+    : response
+
+vars.put(&quot;TransactionName&quot;, TXN_NAME)
+vars.put(&quot;ResponseCode&quot;, responseCode)
+vars.put(
+    &quot;UniqueIdentifier&quot;,
+    &quot;Application ID: &quot; + (vars.get(&quot;C_ApplicationID&quot;) ?: &quot;NA&quot;)
+)
+vars.put(&quot;ErrorMsg&quot;, &quot;NA&quot;)
+
+// Validation
+boolean codeOk = OK_CODES.contains(responseCode.trim())
+boolean textOk = response.contains(TEXT_CHECK) &amp;&amp;
+                 response.contains(TEXT_CHECK1)
+
+if (codeOk &amp;&amp; textOk) {
+    if (loadTime &gt; acceptableRespTime) {
+        vars.put(&quot;status&quot;, ST_SLOW)
+        vars.put(
+            &quot;ErrorMsg&quot;,
+            &quot;ResponseTime &quot; + loadTime +
+            &quot; ms higher than &quot; + acceptableRespTime + &quot; ms&quot;
+        )
+    } else {
+        vars.put(&quot;status&quot;, ST_PASS)
+    }
+
+    AssertionResult.setFailure(false)
+
+} else {
+    String msg
+
+    if (responseCode.contains(&quot;Non HTTP response code&quot;)) {
+        vars.put(&quot;ResponseCode&quot;, &quot;ReceivedNonHTTPResponseCode&quot;)
+        msg = &quot;ReceivedNonHTTPResponseCode&quot;
+    } else if (!codeOk) {
+        msg = &quot;Unexpected response code: &quot; + responseCode
+    } else {
+        msg = &quot;Expected text not found: &quot; +
+              TEXT_CHECK + &quot; / &quot; + TEXT_CHECK1
+    }
+
+    vars.put(&quot;ErrorMsg&quot;, msg)
+    vars.put(&quot;status&quot;, ST_FAIL)
+
+    AssertionResult.setFailure(true)
+    AssertionResult.setFailureMessage(msg)
+}</stringProp>
+              <stringProp name="scriptLanguage">groovy</stringProp>
+            </JSR223Assertion>
+            <hashTree/>
+          </hashTree>
+        </hashTree>
+        <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="ThinkTime" enabled="true">
+          <collectionProp name="ModuleController.node_path">
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="170071582">Test Fragment</stringProp>
+            <stringProp name="1310565055">ThinkTime</stringProp>
+          </collectionProp>
+        </ModuleController>
+        <hashTree/>
+        <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="LogController" enabled="true">
+          <collectionProp name="ModuleController.node_path">
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="170071582">Test Fragment</stringProp>
+            <stringProp name="-1446982176">LogController</stringProp>
+          </collectionProp>
+        </ModuleController>
+        <hashTree/>
+        <TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="Tarnsaction2">
+          <boolProp name="TransactionController.parent">true</boolProp>
+          <boolProp name="TransactionController.includeTimers">false</boolProp>
+        </TransactionController>
+        <hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request" enabled="true">
+            <stringProp name="TestPlan.comments">Created from cURL on 2026-10-15T22:07:00.7410774</stringProp>
+            <stringProp name="HTTPSampler.domain">${ApplicationURL1}</stringProp>
+            <stringProp name="HTTPSampler.protocol">https</stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+            <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP HeaderManager" enabled="true">
+              <collectionProp name="HeaderManager.headers">
+                <elementProp name="accept" elementType="Header">
+                  <stringProp name="Header.name">accept</stringProp>
+                  <stringProp name="Header.value">text/html,application/xhtml+xml,application/xml;q=0.9,image/jxl,image/avif,image/webp,image/apng,*/*;q=0.8</stringProp>
+                </elementProp>
+                <elementProp name="accept-language" elementType="Header">
+                  <stringProp name="Header.name">accept-language</stringProp>
+                  <stringProp name="Header.value">en-US,en;q=0.9</stringProp>
+                </elementProp>
+                <elementProp name="downlink" elementType="Header">
+                  <stringProp name="Header.name">downlink</stringProp>
+                  <stringProp name="Header.value">10</stringProp>
+                </elementProp>
+                <elementProp name="priority" elementType="Header">
+                  <stringProp name="Header.name">priority</stringProp>
+                  <stringProp name="Header.value">u=4, i</stringProp>
+                </elementProp>
+                <elementProp name="referer" elementType="Header">
+                  <stringProp name="Header.name">referer</stringProp>
+                  <stringProp name="Header.value">https://${ApplicationURL1}/</stringProp>
+                </elementProp>
+                <elementProp name="rtt" elementType="Header">
+                  <stringProp name="Header.name">rtt</stringProp>
+                  <stringProp name="Header.value">50</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua</stringProp>
+                  <stringProp name="Header.value">&quot;Google Chrome&quot;;v=&quot;155&quot;, &quot;Chromium&quot;;v=&quot;155&quot;, &quot;Not(A:Brand&quot;;v=&quot;24&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-arch" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-arch</stringProp>
+                  <stringProp name="Header.value">&quot;x86&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-bitness" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-bitness</stringProp>
+                  <stringProp name="Header.value">&quot;64&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-form-factors" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-form-factors</stringProp>
+                  <stringProp name="Header.value">&quot;Desktop&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-full-version" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-full-version</stringProp>
+                  <stringProp name="Header.value">&quot;155.0.8059.39&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-full-version-list" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-full-version-list</stringProp>
+                  <stringProp name="Header.value">&quot;Google Chrome&quot;;v=&quot;155.0.8059.39&quot;, &quot;Chromium&quot;;v=&quot;155.0.8059.39&quot;, &quot;Not(A:Brand&quot;;v=&quot;24.0.0.0&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-mobile" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-mobile</stringProp>
+                  <stringProp name="Header.value">?0</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-model" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-model</stringProp>
+                  <stringProp name="Header.value">&quot;&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-platform" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-platform</stringProp>
+                  <stringProp name="Header.value">&quot;Windows&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-platform-version" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-platform-version</stringProp>
+                  <stringProp name="Header.value">&quot;19.0.0&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-wow64" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-wow64</stringProp>
+                  <stringProp name="Header.value">?0</stringProp>
+                </elementProp>
+                <elementProp name="sec-fetch-dest" elementType="Header">
+                  <stringProp name="Header.name">sec-fetch-dest</stringProp>
+                  <stringProp name="Header.value">document</stringProp>
+                </elementProp>
+                <elementProp name="sec-fetch-mode" elementType="Header">
+                  <stringProp name="Header.name">sec-fetch-mode</stringProp>
+                  <stringProp name="Header.value">navigate</stringProp>
+                </elementProp>
+                <elementProp name="sec-fetch-site" elementType="Header">
+                  <stringProp name="Header.name">sec-fetch-site</stringProp>
+                  <stringProp name="Header.value">none</stringProp>
+                </elementProp>
+                <elementProp name="sec-purpose" elementType="Header">
+                  <stringProp name="Header.name">sec-purpose</stringProp>
+                  <stringProp name="Header.value">prefetch</stringProp>
+                </elementProp>
+                <elementProp name="sec-speculation-tags" elementType="Header">
+                  <stringProp name="Header.name">sec-speculation-tags</stringProp>
+                  <stringProp name="Header.value">null</stringProp>
+                </elementProp>
+                <elementProp name="upgrade-insecure-requests" elementType="Header">
+                  <stringProp name="Header.name">upgrade-insecure-requests</stringProp>
+                  <stringProp name="Header.value">1</stringProp>
+                </elementProp>
+                <elementProp name="user-agent" elementType="Header">
+                  <stringProp name="Header.name">user-agent</stringProp>
+                  <stringProp name="Header.value">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36</stringProp>
+                </elementProp>
+                <elementProp name="x-browser-channel" elementType="Header">
+                  <stringProp name="Header.name">x-browser-channel</stringProp>
+                  <stringProp name="Header.value">stable</stringProp>
+                </elementProp>
+                <elementProp name="x-browser-copyright" elementType="Header">
+                  <stringProp name="Header.name">x-browser-copyright</stringProp>
+                  <stringProp name="Header.value">Copyright 2026 Google LLC. All Rights Reserved.</stringProp>
+                </elementProp>
+                <elementProp name="x-browser-validation" elementType="Header">
+                  <stringProp name="Header.name">x-browser-validation</stringProp>
+                  <stringProp name="Header.value">PHV9Kd1t5Di1L3anF4wYYYkjIos=</stringProp>
+                </elementProp>
+                <elementProp name="x-browser-year" elementType="Header">
+                  <stringProp name="Header.name">x-browser-year</stringProp>
+                  <stringProp name="Header.value">2026</stringProp>
+                </elementProp>
+                <elementProp name="x-client-data" elementType="Header">
+                  <stringProp name="Header.name">x-client-data</stringProp>
+                  <stringProp name="Header.value">CKmdygEIk6HLAQiFoM0BCJfnlDAI1+iUMAjE75Qw</stringProp>
+                </elementProp>
+              </collectionProp>
+              <stringProp name="TestPlan.comments">Created from cURL on 2026-10-15T22:07:00.7410774</stringProp>
+            </HeaderManager>
+            <hashTree/>
+            <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="JSR223 Assertion" enabled="true">
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="script">String TXN_NAME = &quot;Tarnsaction1&quot;
+String TEXT_CHECK = &quot;submit&quot;
+String TEXT_CHECK1 = &quot;function&quot;
+
+Set&lt;String&gt; OK_CODES = [&quot;200&quot;, &quot;201&quot;, &quot;202&quot;, &quot;204&quot;, &quot;302&quot;] as Set
+int MAX_ERR_LEN = 500
+
+// ---- Status values ---------------------------------------------------------
+String ST_PASS = &quot;Pass&quot;
+String ST_SLOW = &quot;Slow&quot;
+String ST_FAIL = &quot;Fail&quot;
+
+// ---- Response data --------------------------------------------------------
+String responseCode = prev.getResponseCode() ?: &quot;&quot;
+String response = prev.getResponseDataAsString() ?: &quot;&quot;
+
+// Strip characters that break Grafana ingestion
+for (String ch : [&apos;\r&apos;, &apos;\n&apos;, &apos;,&apos;, &apos;-&apos;, &apos;?&apos;, &quot;&apos;&quot;, &apos;{&apos;, &apos;}&apos;, &apos;/&apos;, &apos;&quot;&apos;]) {
+    response = response.replace(ch, &quot;&quot;)
+}
+
+// ---- Load time and threshold ----------------------------------------------
+long loadTime = prev.getTime()
+vars.put(&quot;LoadTime&quot;, String.valueOf(loadTime))
+
+long acceptableRespTime = Long.MAX_VALUE
+try {
+    acceptableRespTime = Long.parseLong(
+        vars.get(&quot;v_AcceptableRespTime&quot;) ?: &quot;&quot;
+    )
+} catch (NumberFormatException e) {
+    log.warn(&quot;v_AcceptableRespTime missing or not numeric, skipping slow check&quot;)
+}
+
+// ---- Fields logged to Grafana ---------------------------------------------
+String errShort = response.length() &gt; MAX_ERR_LEN
+    ? response.substring(0, MAX_ERR_LEN)
+    : response
+
+vars.put(&quot;TransactionName&quot;, TXN_NAME)
+vars.put(&quot;ResponseCode&quot;, responseCode)
+vars.put(&quot;UniqueIdentifier&quot;, &quot;Application ID: &quot; + (vars.get(&quot;C_ApplicationID&quot;) ?: &quot;NA&quot;))
+vars.put(&quot;ErrorMsg&quot;, &quot;NA&quot;)
+
+// ---- Validation ------------------------------------------------------------
+boolean codeOk = OK_CODES.contains(responseCode.trim())
+boolean textOk = response.contains(TEXT_CHECK) &amp;&amp;
+                 response.contains(TEXT_CHECK1)
+
+if (codeOk &amp;&amp; textOk) {
+    if (loadTime &gt; acceptableRespTime) {
+        vars.put(&quot;status&quot;, ST_SLOW)
+        vars.put(&quot;ErrorMsg&quot;,
+            &quot;ResponseTime &quot; + loadTime +
+            &quot; ms higher than &quot; + acceptableRespTime + &quot; ms&quot;)
+    } else {
+        vars.put(&quot;status&quot;, ST_PASS)
+    }
+
+    AssertionResult.setFailure(false)
+
+} else {
+    String msg
+
+    if (responseCode.contains(&quot;Non HTTP response code&quot;)) {
+        vars.put(&quot;ResponseCode&quot;, &quot;ReceivedNonHTTPResponseCode&quot;)
+        msg = &quot;ReceivedNonHTTPResponseCode&quot;
+    } else if (!codeOk) {
+        msg = &quot;Unexpected response code: &quot; + responseCode
+    } else {
+        msg = &quot;Expected text not found: &quot; +
+              TEXT_CHECK + &quot; / &quot; + TEXT_CHECK1
+    }
+
+    vars.put(&quot;ErrorMsg&quot;, msg)
+    vars.put(&quot;status&quot;, ST_FAIL)
+
+    AssertionResult.setFailure(true)
+    AssertionResult.setFailureMessage(msg)
+}</stringProp>
+              <stringProp name="scriptLanguage">groovy</stringProp>
+            </JSR223Assertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request">
+            <stringProp name="TestPlan.comments">Created from cURL on 2026-10-15T22:17:56.1969564</stringProp>
+            <stringProp name="HTTPSampler.domain">${ApplicationURL2}</stringProp>
+            <stringProp name="HTTPSampler.protocol">https</stringProp>
+            <stringProp name="HTTPSampler.path">/mail/u/0/</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+            <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP HeaderManager" enabled="true">
+              <collectionProp name="HeaderManager.headers">
+                <elementProp name="Referer" elementType="Header">
+                  <stringProp name="Header.name">Referer</stringProp>
+                  <stringProp name="Header.value">https://www.google.com/</stringProp>
+                </elementProp>
+                <elementProp name="Upgrade-Insecure-Requests" elementType="Header">
+                  <stringProp name="Header.name">Upgrade-Insecure-Requests</stringProp>
+                  <stringProp name="Header.value">1</stringProp>
+                </elementProp>
+                <elementProp name="User-Agent" elementType="Header">
+                  <stringProp name="Header.name">User-Agent</stringProp>
+                  <stringProp name="Header.value">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua</stringProp>
+                  <stringProp name="Header.value">&quot;Google Chrome&quot;;v=&quot;155&quot;, &quot;Chromium&quot;;v=&quot;155&quot;, &quot;Not(A:Brand&quot;;v=&quot;24&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-arch" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-arch</stringProp>
+                  <stringProp name="Header.value">&quot;x86&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-bitness" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-bitness</stringProp>
+                  <stringProp name="Header.value">&quot;64&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-form-factors" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-form-factors</stringProp>
+                  <stringProp name="Header.value">&quot;Desktop&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-full-version" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-full-version</stringProp>
+                  <stringProp name="Header.value">&quot;155.0.8059.39&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-full-version-list" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-full-version-list</stringProp>
+                  <stringProp name="Header.value">&quot;Google Chrome&quot;;v=&quot;155.0.8059.39&quot;, &quot;Chromium&quot;;v=&quot;155.0.8059.39&quot;, &quot;Not(A:Brand&quot;;v=&quot;24.0.0.0&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-mobile" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-mobile</stringProp>
+                  <stringProp name="Header.value">?0</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-model" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-model</stringProp>
+                  <stringProp name="Header.value">&quot;&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-platform" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-platform</stringProp>
+                  <stringProp name="Header.value">&quot;Windows&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-platform-version" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-platform-version</stringProp>
+                  <stringProp name="Header.value">&quot;19.0.0&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-wow64" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-wow64</stringProp>
+                  <stringProp name="Header.value">?0</stringProp>
+                </elementProp>
+              </collectionProp>
+              <stringProp name="TestPlan.comments">Created from cURL on 2026-10-15T22:17:56.1969564</stringProp>
+            </HeaderManager>
+            <hashTree/>
+            <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="JSR223 Assertion">
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="script">String TXN_NAME = &quot;Tarnsaction1&quot;
+String TEXT_CHECK = &quot;Powered&quot;
+String TEXT_CHECK1 = &quot;Email&quot;
+
+Set&lt;String&gt; OK_CODES = [&quot;200&quot;, &quot;201&quot;, &quot;202&quot;, &quot;204&quot;, &quot;302&quot;] as Set
+int MAX_ERR_LEN = 500
+
+// ---- Status values ---------------------------------------------------------
+String ST_PASS = &quot;Pass&quot;
+String ST_SLOW = &quot;Slow&quot;
+String ST_FAIL = &quot;Fail&quot;
+
+// ---- Response data --------------------------------------------------------
+String responseCode = prev.getResponseCode() ?: &quot;&quot;
+String response = prev.getResponseDataAsString() ?: &quot;&quot;
+
+// Strip characters that break Grafana ingestion
+for (String ch : [&apos;\r&apos;, &apos;\n&apos;, &apos;,&apos;, &apos;-&apos;, &apos;?&apos;, &quot;&apos;&quot;, &apos;{&apos;, &apos;}&apos;, &apos;/&apos;, &apos;&quot;&apos;]) {
+    response = response.replace(ch, &quot;&quot;)
+}
+
+// ---- Load time and threshold ----------------------------------------------
+long loadTime = prev.getTime()
+vars.put(&quot;LoadTime&quot;, String.valueOf(loadTime))
+
+long acceptableRespTime = Long.MAX_VALUE
+try {
+    acceptableRespTime = Long.parseLong(
+        vars.get(&quot;v_AcceptableRespTime&quot;) ?: &quot;&quot;
+    )
+} catch (NumberFormatException e) {
+    log.warn(&quot;v_AcceptableRespTime missing or not numeric, skipping slow check&quot;)
+}
+
+// ---- Fields logged to Grafana ---------------------------------------------
+String errShort = response.length() &gt; MAX_ERR_LEN
+    ? response.substring(0, MAX_ERR_LEN)
+    : response
+
+vars.put(&quot;TransactionName&quot;, TXN_NAME)
+vars.put(&quot;ResponseCode&quot;, responseCode)
+vars.put(&quot;UniqueIdentifier&quot;, &quot;Application ID: &quot; + (vars.get(&quot;C_ApplicationID&quot;) ?: &quot;NA&quot;))
+vars.put(&quot;ErrorMsg&quot;, &quot;NA&quot;)
+
+// ---- Validation ------------------------------------------------------------
+boolean codeOk = OK_CODES.contains(responseCode.trim())
+boolean textOk = response.contains(TEXT_CHECK) &amp;&amp;
+                 response.contains(TEXT_CHECK1)
+
+if (codeOk &amp;&amp; textOk) {
+    if (loadTime &gt; acceptableRespTime) {
+        vars.put(&quot;status&quot;, ST_SLOW)
+        vars.put(&quot;ErrorMsg&quot;,
+            &quot;ResponseTime &quot; + loadTime +
+            &quot; ms higher than &quot; + acceptableRespTime + &quot; ms&quot;)
+    } else {
+        vars.put(&quot;status&quot;, ST_PASS)
+    }
+
+    AssertionResult.setFailure(false)
+
+} else {
+    String msg
+
+    if (responseCode.contains(&quot;Non HTTP response code&quot;)) {
+        vars.put(&quot;ResponseCode&quot;, &quot;ReceivedNonHTTPResponseCode&quot;)
+        msg = &quot;ReceivedNonHTTPResponseCode&quot;
+    } else if (!codeOk) {
+        msg = &quot;Unexpected response code: &quot; + responseCode
+    } else {
+        msg = &quot;Expected text not found: &quot; +
+              TEXT_CHECK + &quot; / &quot; + TEXT_CHECK1
+    }
+
+    vars.put(&quot;ErrorMsg&quot;, msg)
+    vars.put(&quot;status&quot;, ST_FAIL)
+
+    AssertionResult.setFailure(true)
+    AssertionResult.setFailureMessage(msg)
+}</stringProp>
+              <stringProp name="scriptLanguage">groovy</stringProp>
+            </JSR223Assertion>
+            <hashTree/>
+          </hashTree>
+        </hashTree>
+        <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="ThinkTime" enabled="true">
+          <collectionProp name="ModuleController.node_path">
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="170071582">Test Fragment</stringProp>
+            <stringProp name="1310565055">ThinkTime</stringProp>
+          </collectionProp>
+        </ModuleController>
+        <hashTree/>
+        <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="LogController" enabled="true">
+          <collectionProp name="ModuleController.node_path">
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="170071582">Test Fragment</stringProp>
+            <stringProp name="-1446982176">LogController</stringProp>
+          </collectionProp>
+        </ModuleController>
+        <hashTree/>
+        <TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="Tarnsaction2" enabled="true">
+          <boolProp name="TransactionController.parent">true</boolProp>
+          <boolProp name="TransactionController.includeTimers">false</boolProp>
+        </TransactionController>
+        <hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request" enabled="true">
+            <stringProp name="TestPlan.comments">Created from cURL on 2026-10-15T22:07:00.7410774</stringProp>
+            <stringProp name="HTTPSampler.domain">${ApplicationURL1}</stringProp>
+            <stringProp name="HTTPSampler.protocol">https</stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+            <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP HeaderManager" enabled="true">
+              <collectionProp name="HeaderManager.headers">
+                <elementProp name="accept" elementType="Header">
+                  <stringProp name="Header.name">accept</stringProp>
+                  <stringProp name="Header.value">text/html,application/xhtml+xml,application/xml;q=0.9,image/jxl,image/avif,image/webp,image/apng,*/*;q=0.8</stringProp>
+                </elementProp>
+                <elementProp name="accept-language" elementType="Header">
+                  <stringProp name="Header.name">accept-language</stringProp>
+                  <stringProp name="Header.value">en-US,en;q=0.9</stringProp>
+                </elementProp>
+                <elementProp name="downlink" elementType="Header">
+                  <stringProp name="Header.name">downlink</stringProp>
+                  <stringProp name="Header.value">10</stringProp>
+                </elementProp>
+                <elementProp name="priority" elementType="Header">
+                  <stringProp name="Header.name">priority</stringProp>
+                  <stringProp name="Header.value">u=4, i</stringProp>
+                </elementProp>
+                <elementProp name="referer" elementType="Header">
+                  <stringProp name="Header.name">referer</stringProp>
+                  <stringProp name="Header.value">https://${ApplicationURL1}/</stringProp>
+                </elementProp>
+                <elementProp name="rtt" elementType="Header">
+                  <stringProp name="Header.name">rtt</stringProp>
+                  <stringProp name="Header.value">50</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua</stringProp>
+                  <stringProp name="Header.value">&quot;Google Chrome&quot;;v=&quot;155&quot;, &quot;Chromium&quot;;v=&quot;155&quot;, &quot;Not(A:Brand&quot;;v=&quot;24&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-arch" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-arch</stringProp>
+                  <stringProp name="Header.value">&quot;x86&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-bitness" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-bitness</stringProp>
+                  <stringProp name="Header.value">&quot;64&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-form-factors" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-form-factors</stringProp>
+                  <stringProp name="Header.value">&quot;Desktop&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-full-version" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-full-version</stringProp>
+                  <stringProp name="Header.value">&quot;155.0.8059.39&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-full-version-list" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-full-version-list</stringProp>
+                  <stringProp name="Header.value">&quot;Google Chrome&quot;;v=&quot;155.0.8059.39&quot;, &quot;Chromium&quot;;v=&quot;155.0.8059.39&quot;, &quot;Not(A:Brand&quot;;v=&quot;24.0.0.0&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-mobile" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-mobile</stringProp>
+                  <stringProp name="Header.value">?0</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-model" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-model</stringProp>
+                  <stringProp name="Header.value">&quot;&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-platform" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-platform</stringProp>
+                  <stringProp name="Header.value">&quot;Windows&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-platform-version" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-platform-version</stringProp>
+                  <stringProp name="Header.value">&quot;19.0.0&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-wow64" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-wow64</stringProp>
+                  <stringProp name="Header.value">?0</stringProp>
+                </elementProp>
+                <elementProp name="sec-fetch-dest" elementType="Header">
+                  <stringProp name="Header.name">sec-fetch-dest</stringProp>
+                  <stringProp name="Header.value">document</stringProp>
+                </elementProp>
+                <elementProp name="sec-fetch-mode" elementType="Header">
+                  <stringProp name="Header.name">sec-fetch-mode</stringProp>
+                  <stringProp name="Header.value">navigate</stringProp>
+                </elementProp>
+                <elementProp name="sec-fetch-site" elementType="Header">
+                  <stringProp name="Header.name">sec-fetch-site</stringProp>
+                  <stringProp name="Header.value">none</stringProp>
+                </elementProp>
+                <elementProp name="sec-purpose" elementType="Header">
+                  <stringProp name="Header.name">sec-purpose</stringProp>
+                  <stringProp name="Header.value">prefetch</stringProp>
+                </elementProp>
+                <elementProp name="sec-speculation-tags" elementType="Header">
+                  <stringProp name="Header.name">sec-speculation-tags</stringProp>
+                  <stringProp name="Header.value">null</stringProp>
+                </elementProp>
+                <elementProp name="upgrade-insecure-requests" elementType="Header">
+                  <stringProp name="Header.name">upgrade-insecure-requests</stringProp>
+                  <stringProp name="Header.value">1</stringProp>
+                </elementProp>
+                <elementProp name="user-agent" elementType="Header">
+                  <stringProp name="Header.name">user-agent</stringProp>
+                  <stringProp name="Header.value">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36</stringProp>
+                </elementProp>
+                <elementProp name="x-browser-channel" elementType="Header">
+                  <stringProp name="Header.name">x-browser-channel</stringProp>
+                  <stringProp name="Header.value">stable</stringProp>
+                </elementProp>
+                <elementProp name="x-browser-copyright" elementType="Header">
+                  <stringProp name="Header.name">x-browser-copyright</stringProp>
+                  <stringProp name="Header.value">Copyright 2026 Google LLC. All Rights Reserved.</stringProp>
+                </elementProp>
+                <elementProp name="x-browser-validation" elementType="Header">
+                  <stringProp name="Header.name">x-browser-validation</stringProp>
+                  <stringProp name="Header.value">PHV9Kd1t5Di1L3anF4wYYYkjIos=</stringProp>
+                </elementProp>
+                <elementProp name="x-browser-year" elementType="Header">
+                  <stringProp name="Header.name">x-browser-year</stringProp>
+                  <stringProp name="Header.value">2026</stringProp>
+                </elementProp>
+                <elementProp name="x-client-data" elementType="Header">
+                  <stringProp name="Header.name">x-client-data</stringProp>
+                  <stringProp name="Header.value">CKmdygEIk6HLAQiFoM0BCJfnlDAI1+iUMAjE75Qw</stringProp>
+                </elementProp>
+              </collectionProp>
+              <stringProp name="TestPlan.comments">Created from cURL on 2026-10-15T22:07:00.7410774</stringProp>
+            </HeaderManager>
+            <hashTree/>
+            <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="JSR223 Assertion" enabled="true">
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="script">String TXN_NAME = &quot;Tarnsaction1&quot;
+String TEXT_CHECK = &quot;submit&quot;
+String TEXT_CHECK1 = &quot;function&quot;
+
+Set&lt;String&gt; OK_CODES = [&quot;200&quot;, &quot;201&quot;, &quot;202&quot;, &quot;204&quot;, &quot;302&quot;] as Set
+int MAX_ERR_LEN = 500
+
+// ---- Status values ---------------------------------------------------------
+String ST_PASS = &quot;Pass&quot;
+String ST_SLOW = &quot;Slow&quot;
+String ST_FAIL = &quot;Fail&quot;
+
+// ---- Response data --------------------------------------------------------
+String responseCode = prev.getResponseCode() ?: &quot;&quot;
+String response = prev.getResponseDataAsString() ?: &quot;&quot;
+
+// Strip characters that break Grafana ingestion
+for (String ch : [&apos;\r&apos;, &apos;\n&apos;, &apos;,&apos;, &apos;-&apos;, &apos;?&apos;, &quot;&apos;&quot;, &apos;{&apos;, &apos;}&apos;, &apos;/&apos;, &apos;&quot;&apos;]) {
+    response = response.replace(ch, &quot;&quot;)
+}
+
+// ---- Load time and threshold ----------------------------------------------
+long loadTime = prev.getTime()
+vars.put(&quot;LoadTime&quot;, String.valueOf(loadTime))
+
+long acceptableRespTime = Long.MAX_VALUE
+try {
+    acceptableRespTime = Long.parseLong(
+        vars.get(&quot;v_AcceptableRespTime&quot;) ?: &quot;&quot;
+    )
+} catch (NumberFormatException e) {
+    log.warn(&quot;v_AcceptableRespTime missing or not numeric, skipping slow check&quot;)
+}
+
+// ---- Fields logged to Grafana ---------------------------------------------
+String errShort = response.length() &gt; MAX_ERR_LEN
+    ? response.substring(0, MAX_ERR_LEN)
+    : response
+
+vars.put(&quot;TransactionName&quot;, TXN_NAME)
+vars.put(&quot;ResponseCode&quot;, responseCode)
+vars.put(&quot;UniqueIdentifier&quot;, &quot;Application ID: &quot; + (vars.get(&quot;C_ApplicationID&quot;) ?: &quot;NA&quot;))
+vars.put(&quot;ErrorMsg&quot;, &quot;NA&quot;)
+
+// ---- Validation ------------------------------------------------------------
+boolean codeOk = OK_CODES.contains(responseCode.trim())
+boolean textOk = response.contains(TEXT_CHECK) &amp;&amp;
+                 response.contains(TEXT_CHECK1)
+
+if (codeOk &amp;&amp; textOk) {
+    if (loadTime &gt; acceptableRespTime) {
+        vars.put(&quot;status&quot;, ST_SLOW)
+        vars.put(&quot;ErrorMsg&quot;,
+            &quot;ResponseTime &quot; + loadTime +
+            &quot; ms higher than &quot; + acceptableRespTime + &quot; ms&quot;)
+    } else {
+        vars.put(&quot;status&quot;, ST_PASS)
+    }
+
+    AssertionResult.setFailure(false)
+
+} else {
+    String msg
+
+    if (responseCode.contains(&quot;Non HTTP response code&quot;)) {
+        vars.put(&quot;ResponseCode&quot;, &quot;ReceivedNonHTTPResponseCode&quot;)
+        msg = &quot;ReceivedNonHTTPResponseCode&quot;
+    } else if (!codeOk) {
+        msg = &quot;Unexpected response code: &quot; + responseCode
+    } else {
+        msg = &quot;Expected text not found: &quot; +
+              TEXT_CHECK + &quot; / &quot; + TEXT_CHECK1
+    }
+
+    vars.put(&quot;ErrorMsg&quot;, msg)
+    vars.put(&quot;status&quot;, ST_FAIL)
+
+    AssertionResult.setFailure(true)
+    AssertionResult.setFailureMessage(msg)
+}</stringProp>
+              <stringProp name="scriptLanguage">groovy</stringProp>
+            </JSR223Assertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request">
+            <stringProp name="TestPlan.comments">Created from cURL on 2026-10-15T22:17:56.1969564</stringProp>
+            <stringProp name="HTTPSampler.domain">${ApplicationURL2}</stringProp>
+            <stringProp name="HTTPSampler.protocol">https</stringProp>
+            <stringProp name="HTTPSampler.path">/mail/u/0/</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+            <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP HeaderManager" enabled="true">
+              <collectionProp name="HeaderManager.headers">
+                <elementProp name="Referer" elementType="Header">
+                  <stringProp name="Header.name">Referer</stringProp>
+                  <stringProp name="Header.value">https://www.google.com/</stringProp>
+                </elementProp>
+                <elementProp name="Upgrade-Insecure-Requests" elementType="Header">
+                  <stringProp name="Header.name">Upgrade-Insecure-Requests</stringProp>
+                  <stringProp name="Header.value">1</stringProp>
+                </elementProp>
+                <elementProp name="User-Agent" elementType="Header">
+                  <stringProp name="Header.name">User-Agent</stringProp>
+                  <stringProp name="Header.value">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua</stringProp>
+                  <stringProp name="Header.value">&quot;Google Chrome&quot;;v=&quot;155&quot;, &quot;Chromium&quot;;v=&quot;155&quot;, &quot;Not(A:Brand&quot;;v=&quot;24&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-arch" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-arch</stringProp>
+                  <stringProp name="Header.value">&quot;x86&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-bitness" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-bitness</stringProp>
+                  <stringProp name="Header.value">&quot;64&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-form-factors" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-form-factors</stringProp>
+                  <stringProp name="Header.value">&quot;Desktop&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-full-version" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-full-version</stringProp>
+                  <stringProp name="Header.value">&quot;155.0.8059.39&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-full-version-list" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-full-version-list</stringProp>
+                  <stringProp name="Header.value">&quot;Google Chrome&quot;;v=&quot;155.0.8059.39&quot;, &quot;Chromium&quot;;v=&quot;155.0.8059.39&quot;, &quot;Not(A:Brand&quot;;v=&quot;24.0.0.0&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-mobile" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-mobile</stringProp>
+                  <stringProp name="Header.value">?0</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-model" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-model</stringProp>
+                  <stringProp name="Header.value">&quot;&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-platform" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-platform</stringProp>
+                  <stringProp name="Header.value">&quot;Windows&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-platform-version" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-platform-version</stringProp>
+                  <stringProp name="Header.value">&quot;19.0.0&quot;</stringProp>
+                </elementProp>
+                <elementProp name="sec-ch-ua-wow64" elementType="Header">
+                  <stringProp name="Header.name">sec-ch-ua-wow64</stringProp>
+                  <stringProp name="Header.value">?0</stringProp>
+                </elementProp>
+              </collectionProp>
+              <stringProp name="TestPlan.comments">Created from cURL on 2026-10-15T22:17:56.1969564</stringProp>
+            </HeaderManager>
+            <hashTree/>
+            <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="JSR223 Assertion">
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="script">String TXN_NAME = &quot;Tarnsaction1&quot;
+String TEXT_CHECK = &quot;Powered&quot;
+String TEXT_CHECK1 = &quot;Email&quot;
+
+Set&lt;String&gt; OK_CODES = [&quot;200&quot;, &quot;201&quot;, &quot;202&quot;, &quot;204&quot;, &quot;302&quot;] as Set
+int MAX_ERR_LEN = 500
+
+// ---- Status values ---------------------------------------------------------
+String ST_PASS = &quot;Pass&quot;
+String ST_SLOW = &quot;Slow&quot;
+String ST_FAIL = &quot;Fail&quot;
+
+// ---- Response data --------------------------------------------------------
+String responseCode = prev.getResponseCode() ?: &quot;&quot;
+String response = prev.getResponseDataAsString() ?: &quot;&quot;
+
+// Strip characters that break Grafana ingestion
+for (String ch : [&apos;\r&apos;, &apos;\n&apos;, &apos;,&apos;, &apos;-&apos;, &apos;?&apos;, &quot;&apos;&quot;, &apos;{&apos;, &apos;}&apos;, &apos;/&apos;, &apos;&quot;&apos;]) {
+    response = response.replace(ch, &quot;&quot;)
+}
+
+// ---- Load time and threshold ----------------------------------------------
+long loadTime = prev.getTime()
+vars.put(&quot;LoadTime&quot;, String.valueOf(loadTime))
+
+long acceptableRespTime = Long.MAX_VALUE
+try {
+    acceptableRespTime = Long.parseLong(
+        vars.get(&quot;v_AcceptableRespTime&quot;) ?: &quot;&quot;
+    )
+} catch (NumberFormatException e) {
+    log.warn(&quot;v_AcceptableRespTime missing or not numeric, skipping slow check&quot;)
+}
+
+// ---- Fields logged to Grafana ---------------------------------------------
+String errShort = response.length() &gt; MAX_ERR_LEN
+    ? response.substring(0, MAX_ERR_LEN)
+    : response
+
+vars.put(&quot;TransactionName&quot;, TXN_NAME)
+vars.put(&quot;ResponseCode&quot;, responseCode)
+vars.put(&quot;UniqueIdentifier&quot;, &quot;Application ID: &quot; + (vars.get(&quot;C_ApplicationID&quot;) ?: &quot;NA&quot;))
+vars.put(&quot;ErrorMsg&quot;, &quot;NA&quot;)
+
+// ---- Validation ------------------------------------------------------------
+boolean codeOk = OK_CODES.contains(responseCode.trim())
+boolean textOk = response.contains(TEXT_CHECK) &amp;&amp;
+                 response.contains(TEXT_CHECK1)
+
+if (codeOk &amp;&amp; textOk) {
+    if (loadTime &gt; acceptableRespTime) {
+        vars.put(&quot;status&quot;, ST_SLOW)
+        vars.put(&quot;ErrorMsg&quot;,
+            &quot;ResponseTime &quot; + loadTime +
+            &quot; ms higher than &quot; + acceptableRespTime + &quot; ms&quot;)
+    } else {
+        vars.put(&quot;status&quot;, ST_PASS)
+    }
+
+    AssertionResult.setFailure(false)
+
+} else {
+    String msg
+
+    if (responseCode.contains(&quot;Non HTTP response code&quot;)) {
+        vars.put(&quot;ResponseCode&quot;, &quot;ReceivedNonHTTPResponseCode&quot;)
+        msg = &quot;ReceivedNonHTTPResponseCode&quot;
+    } else if (!codeOk) {
+        msg = &quot;Unexpected response code: &quot; + responseCode
+    } else {
+        msg = &quot;Expected text not found: &quot; +
+              TEXT_CHECK + &quot; / &quot; + TEXT_CHECK1
+    }
+
+    vars.put(&quot;ErrorMsg&quot;, msg)
+    vars.put(&quot;status&quot;, ST_FAIL)
+
+    AssertionResult.setFailure(true)
+    AssertionResult.setFailureMessage(msg)
+}</stringProp>
+              <stringProp name="scriptLanguage">groovy</stringProp>
+            </JSR223Assertion>
+            <hashTree/>
+          </hashTree>
+        </hashTree>
+        <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="LogController" enabled="true">
+          <collectionProp name="ModuleController.node_path">
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="170071582">Test Fragment</stringProp>
+            <stringProp name="-1446982176">LogController</stringProp>
+          </collectionProp>
+        </ModuleController>
+        <hashTree/>
+        <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="PaceTime">
+          <collectionProp name="ModuleController.node_path">
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="170071582">Test Fragment</stringProp>
+            <stringProp name="809585568">PaceTime</stringProp>
+          </collectionProp>
+        </ModuleController>
+        <hashTree/>
+      </hashTree>
+      <TestFragmentController guiclass="TestFragmentControllerGui" testclass="TestFragmentController" testname="Test Fragment" enabled="false"/>
+      <hashTree>
+        <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="PaceingInterval" enabled="true"/>
+        <hashTree>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="ThinkTime">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">import java.util.concurrent.ThreadLocalRandom
+
+// Think time: random 1500-2500 ms (avg 2000)
+int thinkTime = ThreadLocalRandom.current().nextInt(1500, 2501)
+vars.put(&quot;v_ThinkTime&quot;, String.valueOf(thinkTime))
+SampleResult.setIgnore()
+</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="StartTime">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">try {
+    vars.put(&quot;v_IterStartTime&quot;, String.valueOf(System.currentTimeMillis()))
+} catch (Exception e) {
+    log.error(&quot;Exception in zz_SaveIterStartTime: &quot; + e)
+}
+SampleResult.setIgnore()</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+          <OnceOnlyController guiclass="OnceOnlyControllerGui" testclass="OnceOnlyController" testname="Once Only Controller"/>
+          <hashTree>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="PaceInterval">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">try {
+    String testType = vars.get(&quot;v_TestType&quot;) ?: &quot;Load&quot;    // Smoke | Load | Duration
+    String tgName   = ctx.getThreadGroup().getName()
+
+    String usersStr = vars.get(tgName + &quot;_Users&quot;) ?: vars.get(&quot;Test_Users&quot;) ?: vars.get(&quot;Users&quot;)
+    String tphStr   = vars.get(tgName + &quot;_TPH&quot;)   ?: vars.get(&quot;Test_TPH&quot;)   ?: vars.get(&quot;TPH&quot;)
+
+    if (usersStr == null || tphStr == null) {
+        throw new IllegalArgumentException(&quot;Users or TPH variable missing for thread group: &quot; + tgName)
+    }
+
+    long   users = Long.parseLong(usersStr.trim())
+    double tph   = Double.parseDouble(tphStr.trim())
+
+    switch (testType) {
+        case &quot;Smoke&quot;:
+        case &quot;Load&quot;:
+            break                                          // 100% of target TPH
+        case &quot;Duration&quot;:
+            tph = tph * 0.75                               // 75% of target TPH
+            break
+        default:
+            log.warn(&quot;Unknown v_TestType &apos;&quot; + testType + &quot;&apos;, using 100% of TPH&quot;)
+    }
+
+    if (users &lt;= 0 || tph &lt;= 0) {
+        throw new IllegalArgumentException(&quot;Users=&quot; + users + &quot;, TPH=&quot; + tph + &quot; must be &gt; 0&quot;)
+    }
+
+    // Per-user interval: 3,600,000 ms / (TPH / Users), computed in double to avoid truncation
+    long pacingInterval = Math.round(3600000d * users / tph)
+    vars.put(&quot;v_PacingInterval&quot;, String.valueOf(pacingInterval))
+
+    log.info(&quot;Running &quot; + testType + &quot; test | TG: &quot; + tgName +
+             &quot; | Users: &quot; + users + &quot; | TPH: &quot; + tph +
+             &quot; | Pacing Interval: &quot; + pacingInterval + &quot; ms&quot; +
+             &quot; | Think Time: &quot; + vars.get(&quot;v_ThinkTime&quot;) + &quot; ms&quot;)
+
+} catch (NumberFormatException ex) {
+    log.error(&quot;NumberFormatException in zz_CalculatePacingInterval: &quot; + ex)
+    log.error(&quot;Ensure &lt;ThreadGroupName&gt;_Users and &lt;ThreadGroupName&gt;_TPH (or Test_Users / Test_TPH) exist and are numeric&quot;)
+} catch (Exception e) {
+    log.error(&quot;Exception in zz_CalculatePacingInterval: &quot; + e)
+} finally {
+    SampleResult.setIgnore()
+}</stringProp>
+            </JSR223Sampler>
+            <hashTree/>
+          </hashTree>
+        </hashTree>
+        <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="LogController" enabled="true"/>
+        <hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If Controller" enabled="true">
+            <stringProp name="IfController.condition">${__groovy(vars.get(&quot;status&quot;) == &quot;Slow&quot; || vars.get(&quot;status&quot;) == &quot;Fail&quot; || vars.get(&quot;Status&quot;) == &quot;Slow&quot; || vars.get(&quot;Status&quot;) == &quot;Fail&quot;)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Logs" enabled="true">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">log.info(&quot;Slow Transaction: &quot; + vars.get(&quot;TransactionName&quot;) + 
+    &quot; | UniqueIdentifier: &quot; + vars.get(&quot;UniqueIdentifier&quot;) +
+    &quot; | ResponseCode: &quot; + vars.get(&quot;ResponseCode&quot;) +
+    &quot; | ErrorMsg: &quot; + vars.get(&quot;ErrorMsg&quot;) +
+    &quot; | LoadTime: &quot; + (vars.get(&quot;LoadTime&quot;) ?: vars.get(&quot;loadTime&quot;)))
+SampleResult.setIgnore()</stringProp>
+            </JSR223Sampler>
+            <hashTree/>
+            <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If Controller" enabled="true">
+              <stringProp name="IfController.condition">${__groovy(vars.get(&quot;status&quot;) == &quot;Fail&quot; || vars.get(&quot;Status&quot;) == &quot;Fail&quot;)}</stringProp>
+              <boolProp name="IfController.evaluateAll">false</boolProp>
+              <boolProp name="IfController.useExpression">true</boolProp>
+            </IfController>
+            <hashTree>
+              <TestAction guiclass="TestActionGui" testclass="TestAction" testname="Flow Control Action" enabled="true">
+                <intProp name="ActionProcessor.action">3</intProp>
+                <intProp name="ActionProcessor.target">0</intProp>
+                <stringProp name="ActionProcessor.duration">0</stringProp>
+              </TestAction>
+              <hashTree/>
+            </hashTree>
+          </hashTree>
+        </hashTree>
+        <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="ThinkTime" enabled="true"/>
+        <hashTree>
+          <TestAction guiclass="TestActionGui" testclass="TestAction" testname="Flow Control Action" enabled="true">
+            <intProp name="ActionProcessor.action">1</intProp>
+            <intProp name="ActionProcessor.target">0</intProp>
+            <stringProp name="ActionProcessor.duration">${v_ThinkTime}</stringProp>
+          </TestAction>
+          <hashTree/>
+        </hashTree>
+        <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="PaceTime" enabled="true"/>
+        <hashTree>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="PaceTime" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">import java.util.concurrent.ThreadLocalRandom
+
+try {
+    long iterStart = Long.parseLong(vars.get(&quot;v_IterStartTime&quot;))
+    long iterEnd   = System.currentTimeMillis()
+    vars.put(&quot;v_IterEndTime&quot;, String.valueOf(iterEnd))
+
+    long iterDuration   = iterEnd - iterStart
+    long pacingInterval = Long.parseLong(vars.get(&quot;v_PacingInterval&quot;))
+
+    // Remaining time in the interval, with ±20% jitter (80–120%)
+    long pacingDelay = pacingInterval - iterDuration
+    pacingDelay = (long) (pacingDelay * ThreadLocalRandom.current().nextInt(80, 120) / 100.0)
+
+    if (pacingDelay &gt; 0) {
+        vars.put(&quot;v_PacingDelay&quot;, String.valueOf(pacingDelay))
+        vars.put(&quot;v_PacingMissed&quot;, &quot;false&quot;)
+    } else {
+        vars.put(&quot;v_PacingDelay&quot;, &quot;0&quot;)
+        vars.put(&quot;v_PacingMissed&quot;, &quot;true&quot;)
+        log.warn(&quot;No pacing delay: iteration took &quot; + iterDuration + &quot; ms, interval is &quot; +
+                 pacingInterval + &quot; ms. Target TPH will not be achieved for this thread group. &quot; +
+                 &quot;The application may be slow, or increase the user count.&quot;)
+    }
+
+} catch (Exception e) {
+    vars.put(&quot;v_PacingDelay&quot;, &quot;0&quot;)
+    log.error(&quot;Exception in zz_CalculatePacingDelay: &quot; + e)
+} finally {
+    SampleResult.setIgnore()
+}</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+          <TestAction guiclass="TestActionGui" testclass="TestAction" testname="Flow Control Action" enabled="true">
+            <intProp name="ActionProcessor.action">1</intProp>
+            <intProp name="ActionProcessor.target">0</intProp>
+            <stringProp name="ActionProcessor.duration">${v_PacingDelay}</stringProp>
+          </TestAction>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

@@ -14,6 +14,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -21,9 +22,11 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -68,14 +71,14 @@ public class HarConversionService {
 
     public ConversionArtifact convert(List<MultipartFile> uploads, String filterInclude, String filterExclude,
                                       String removeHeaders, boolean scenarioEnabled, String scenario,
-                                      int users, int executeTime, int rampUp, int rampDown,
+                                      int users, int tph, int executeTime, int rampUp, int rampDown,
                                       List<String> correlationIds,
                                       String responseMessageOne, String responseMessageTwo) throws Exception {
         if (uploads == null || uploads.isEmpty()) {
             throw new IllegalArgumentException("Choose at least one HAR file.");
         }
         if (scenarioEnabled) {
-            validateSchedule(scenario, users, executeTime, rampUp, rampDown);
+            validateSchedule(scenario, users, tph, executeTime, rampUp, rampDown);
         }
         if (!conversionSlots.tryAcquire()) {
             throw new ConversionBusyException("The converter is busy. Please try again shortly.");
@@ -96,7 +99,7 @@ public class HarConversionService {
                     0L, false, true, true, normalizeFilter(filterInclude), normalizeFilter(filterExclude),
                     "", 1, 1, "", false, false, removeHeaders == null ? "" : removeHeaders.trim());
 
-            finalizeJmx(jmxFile, transactionNames, scenarioEnabled, scenario, users, executeTime, rampUp, rampDown,
+            finalizeJmx(jmxFile, transactionNames, scenarioEnabled, scenario, users, tph, executeTime, rampUp, rampDown,
                     correlationCandidates, correlationIds, exchanges, responseMessageOne, responseMessageTwo);
             keepDirectory = true;
             return new ConversionArtifact(workDirectory, jmxFile, previewCandidates(correlationCandidates));
@@ -109,16 +112,25 @@ public class HarConversionService {
     }
 
     public ConversionArtifact convert(List<MultipartFile> uploads, String filterInclude, String filterExclude,
+                                      String removeHeaders, boolean scenarioEnabled, String scenario,
+                                      int users, int executeTime, int rampUp, int rampDown,
+                                      List<String> correlationIds,
+                                      String responseMessageOne, String responseMessageTwo) throws Exception {
+        return convert(uploads, filterInclude, filterExclude, removeHeaders, scenarioEnabled, scenario,
+                users, 10, executeTime, rampUp, rampDown, correlationIds, responseMessageOne, responseMessageTwo);
+    }
+
+    public ConversionArtifact convert(List<MultipartFile> uploads, String filterInclude, String filterExclude,
                                       String removeHeaders, String scenario, int users, int executeTime,
                                       int rampUp, int rampDown) throws Exception {
         return convert(uploads, filterInclude, filterExclude, removeHeaders, true, scenario,
-                users, executeTime, rampUp, rampDown, Collections.emptyList(), "", "");
+                users, 10, executeTime, rampUp, rampDown, Collections.emptyList(), "", "");
     }
 
     public ConversionArtifact convert(List<MultipartFile> uploads, String filterInclude, String filterExclude,
                                       String removeHeaders) throws Exception {
         return convert(uploads, filterInclude, filterExclude, removeHeaders, false, "load",
-                100, 600, 60, 30, Collections.emptyList(), "", "");
+                1, 10, 600, 5, 10, Collections.emptyList(), "", "");
     }
 
     private List<HarExchange> collectExchanges(List<UploadedHar> harFiles) {
@@ -129,6 +141,8 @@ public class HarConversionService {
             for (JsonNode entry : entries) {
                 JsonNode request = entry.path("request");
                 JsonNode response = entry.path("response");
+                int statusCode = response.path("status").asInt(200);
+                String statusText = response.path("statusText").asText("");
                 JsonNode content = response.path("content");
                 String mimeType = content.path("mimeType").asText("");
                 String responseText = content.path("text").isTextual() ? content.path("text").asText() : "";
@@ -139,7 +153,7 @@ public class HarConversionService {
                 if (responseTextBytes > MAX_RESPONSE_TEXT_BYTES) {
                     responseText = "";
                 }
-                exchanges.add(new HarExchange(harFile.originalName, request.path("url").asText(""), mimeType, responseText));
+                exchanges.add(new HarExchange(harFile.originalName, request.path("url").asText(""), mimeType, responseText, statusCode, statusText));
             }
         }
         return exchanges;
@@ -406,9 +420,12 @@ public class HarConversionService {
         return value.substring(0, maximumLength - 1) + "…";
     }
 
-    private void validateSchedule(String scenario, int users, int executeTime, int rampUp, int rampDown) {
+    private void validateSchedule(String scenario, int users, int tph, int executeTime, int rampUp, int rampDown) {
         if (users < 1 || users > 1_000_000) {
             throw new IllegalArgumentException("Peak users must be between 1 and 1,000,000.");
+        }
+        if (tph < 1 || tph > 10_000_000) {
+            throw new IllegalArgumentException("Target TPH must be between 1 and 10,000,000.");
         }
         if (executeTime < 1 || executeTime > 31_536_000) {
             throw new IllegalArgumentException("Execute time must be between 1 and 31,536,000 seconds.");
@@ -422,6 +439,10 @@ public class HarConversionService {
         if (!java.util.Arrays.asList("load", "scalability", "spike", "endurance", "stress").contains(scenario)) {
             throw new IllegalArgumentException("Choose a supported scenario profile.");
         }
+    }
+
+    private void validateSchedule(String scenario, int users, int executeTime, int rampUp, int rampDown) {
+        validateSchedule(scenario, users, 10, executeTime, rampUp, rampDown);
     }
 
     private List<UploadedHar> saveAndValidate(List<MultipartFile> uploads, Path workDirectory) throws IOException {
@@ -519,7 +540,7 @@ public class HarConversionService {
     }
 
     private void finalizeJmx(Path jmxFile, List<String> transactionNames, boolean scenarioEnabled, String scenario,
-                             int users, int executeTime, int rampUp, int rampDown,
+                             int users, int tph, int executeTime, int rampUp, int rampDown,
                              List<Map<String, String>> correlationCandidates, List<String> correlationIds,
                              List<HarExchange> exchanges, String responseMessageOne, String responseMessageTwo) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -529,8 +550,9 @@ public class HarConversionService {
         factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
         factory.setXIncludeAware(false);
         factory.setExpandEntityReferences(false);
-        Document document = factory.newDocumentBuilder().parse(jmxFile.toFile());
-        NodeList controllers = document.getElementsByTagName("TransactionController");
+
+        Document sourceDoc = factory.newDocumentBuilder().parse(jmxFile.toFile());
+        NodeList controllers = sourceDoc.getElementsByTagName("TransactionController");
         if (controllers.getLength() != transactionNames.size()) {
             throw new IllegalStateException("The converter did not produce one transaction per HAR file.");
         }
@@ -538,46 +560,156 @@ public class HarConversionService {
             Element controller = (Element) controllers.item(i);
             controller.setAttribute("testname", transactionNames.get(i));
             setProperty(controller, "TransactionController.parent", "true");
+            setBoolProperty(controller, "TransactionController.includeTimers", false);
         }
 
-        Element defaults = findByTagAndTestName(document, "ConfigTestElement", "HTTP Request Defaults");
+        Element defaults = findByTagAndTestName(sourceDoc, "ConfigTestElement", "HTTP Request Defaults");
         String defaultDomain = defaults == null ? "" : propertyValue(defaults, "HTTPSampler.domain");
         String defaultProtocol = defaults == null ? "" : propertyValue(defaults, "HTTPSampler.protocol");
         String defaultPort = defaults == null ? "" : propertyValue(defaults, "HTTPSampler.port");
         if (defaultDomain.startsWith("${") && defaultDomain.endsWith("}")) {
-            defaultDomain = argumentValue(document, defaultDomain.substring(2, defaultDomain.length() - 1));
+            defaultDomain = argumentValue(sourceDoc, defaultDomain.substring(2, defaultDomain.length() - 1));
         }
         if (defaultProtocol.startsWith("${") && defaultProtocol.endsWith("}")) {
-            defaultProtocol = argumentValue(document, defaultProtocol.substring(2, defaultProtocol.length() - 1));
+            defaultProtocol = argumentValue(sourceDoc, defaultProtocol.substring(2, defaultProtocol.length() - 1));
         }
         if (defaultPort.startsWith("${") && defaultPort.endsWith("}")) {
-            defaultPort = argumentValue(document, defaultPort.substring(2, defaultPort.length() - 1));
+            defaultPort = argumentValue(sourceDoc, defaultPort.substring(2, defaultPort.length() - 1));
         }
 
-        NodeList samplers = document.getElementsByTagName("HTTPSamplerProxy");
-        for (int i = 0; i < samplers.getLength(); i++) {
-            Element sampler = (Element) samplers.item(i);
-            setProperty(sampler, "HTTPSampler.domain", firstNonBlank(propertyValue(sampler, "HTTPSampler.domain"), defaultDomain));
-            setProperty(sampler, "HTTPSampler.protocol", firstNonBlank(propertyValue(sampler, "HTTPSampler.protocol"), defaultProtocol));
-            setProperty(sampler, "HTTPSampler.port", firstNonBlank(propertyValue(sampler, "HTTPSampler.port"), defaultPort));
-            addResponseAssertions(sampler, responseMessageOne, responseMessageTwo);
+        NodeList sourceSamplers = sourceDoc.getElementsByTagName("HTTPSamplerProxy");
+        Set<String> uniqueDomains = new LinkedHashSet<>();
+        for (int i = 0; i < sourceSamplers.getLength(); i++) {
+            Element sampler = (Element) sourceSamplers.item(i);
+            String domain = firstNonBlank(propertyValue(sampler, "HTTPSampler.domain"), defaultDomain);
+            if (!domain.isEmpty()) {
+                uniqueDomains.add(domain);
+            }
+        }
+        if (uniqueDomains.isEmpty()) {
+            uniqueDomains.add("www.example.com");
+        }
+        Map<String, String> domainToVar = new LinkedHashMap<>();
+        int dIdx = 1;
+        for (String d : uniqueDomains) {
+            domainToVar.put(d, "ApplicationURL" + (dIdx++));
         }
 
-        applyCorrelations(document, correlationCandidates, correlationIds, exchanges);
-
-        removeComponentAndHashTree(defaults);
-        removeComponentAndHashTree(findByTagAndTestName(document, "Arguments", "User Defined Variables"));
-
-        if (scenarioEnabled) {
-            replaceThreadGroup(document, scenario, users, executeTime, rampUp, rampDown);
+        for (int i = 0; i < sourceSamplers.getLength(); i++) {
+            Element sampler = (Element) sourceSamplers.item(i);
+            String domain = firstNonBlank(propertyValue(sampler, "HTTPSampler.domain"), defaultDomain);
+            String protocol = firstNonBlank(propertyValue(sampler, "HTTPSampler.protocol"), defaultProtocol);
+            if (protocol.isEmpty()) {
+                protocol = "https";
+            }
+            String port = firstNonBlank(propertyValue(sampler, "HTTPSampler.port"), defaultPort);
+            setProperty(sampler, "HTTPSampler.domain", domain);
+            setProperty(sampler, "HTTPSampler.protocol", protocol);
+            setProperty(sampler, "HTTPSampler.port", port);
         }
+
+        Document templateDoc = loadBaseTemplate(factory);
+
+        Element udv = findByTagAndTestName(templateDoc, "Arguments", "User Defined Variables");
+        setArgumentValue(udv, "ShutDownTime", String.valueOf(rampDown));
+        setArgumentValue(udv, "TestDuration", String.valueOf(executeTime));
+        setArgumentValue(udv, "StartupTime", String.valueOf(rampUp));
+        setArgumentValue(udv, "v_AcceptableRespTime", "5000");
+
+        clearArgumentsMatching(udv, Pattern.compile("^ApplicationURL\\d+$"));
+        for (Map.Entry<String, String> entry : domainToVar.entrySet()) {
+            String domain = entry.getKey();
+            String varName = entry.getValue();
+            setArgumentValue(udv, varName, "${__P(" + varName + "," + domain + ")}");
+        }
+
+        Element wlm = findByTagAndTestName(templateDoc, "Arguments", "WLM");
+        setArgumentValue(wlm, "Test_Users", String.valueOf(users));
+        setArgumentValue(wlm, "Test_TPH", String.valueOf(tph));
+
+        configureUltimateThreadGroupSchedule(templateDoc, scenarioEnabled, scenario, users, executeTime, rampUp, rampDown);
+
+        Element utg = findByTagAndTestName(templateDoc, "kg.apc.jmeter.threads.UltimateThreadGroup", "BaseTestTamplet");
+        if (utg == null) {
+            utg = (Element) templateDoc.getElementsByTagName("kg.apc.jmeter.threads.UltimateThreadGroup").item(0);
+        }
+        Element utgHashTree = nextHashTree(utg);
+        while (utgHashTree.getFirstChild() != null) {
+            utgHashTree.removeChild(utgHashTree.getFirstChild());
+        }
+
+        Element saveStart = createModuleController(templateDoc, "SaveItrateStartTime", "PaceingInterval", "-971294028");
+        utgHashTree.appendChild(saveStart);
+        utgHashTree.appendChild(templateDoc.createElement("hashTree"));
+
+        int[] exchangePointer = new int[]{0};
+        for (int i = 0; i < controllers.getLength(); i++) {
+            Element controller = (Element) controllers.item(i);
+            Element controllerHashTree = nextHashTree(controller);
+
+            Element importedTxn = (Element) templateDoc.importNode(controller, true);
+            Element importedTxnHashTree = (Element) templateDoc.importNode(controllerHashTree, true);
+
+            utgHashTree.appendChild(importedTxn);
+            utgHashTree.appendChild(importedTxnHashTree);
+
+            String txnName = transactionNames.get(i);
+            NodeList samplersInTxn = importedTxnHashTree.getElementsByTagName("HTTPSamplerProxy");
+            for (int s = 0; s < samplersInTxn.getLength(); s++) {
+                Element sampler = (Element) samplersInTxn.item(s);
+                String currentDomain = propertyValue(sampler, "HTTPSampler.domain");
+                String varName = domainToVar.get(currentDomain);
+                if (varName != null) {
+                    setProperty(sampler, "HTTPSampler.domain", "${" + varName + "}");
+                }
+                if (propertyValue(sampler, "HTTPSampler.protocol").isEmpty()) {
+                    setProperty(sampler, "HTTPSampler.protocol", "https");
+                }
+                setProperty(sampler, "HTTPSampler.implementation", "HttpClient4");
+
+                HarExchange match = findMatchingExchange(sampler, exchanges, exchangePointer, currentDomain);
+                int statusCode = match != null ? match.statusCode : 200;
+                setBoolProperty(sampler, "HTTPSampler.follow_redirects", statusCode != 302);
+                setBoolProperty(sampler, "HTTPSampler.auto_redirects", false);
+                setBoolProperty(sampler, "HTTPSampler.use_keepalive", true);
+
+                Element samplerHashTree = nextHashTree(sampler);
+                if (samplerHashTree != null) {
+                    for (Map.Entry<String, String> entry : domainToVar.entrySet()) {
+                        replaceTextInNode(samplerHashTree, entry.getKey(), "${" + entry.getValue() + "}");
+                    }
+                }
+
+                addJSR223Assertion(sampler, txnName, responseMessageOne, responseMessageTwo, match);
+            }
+
+            if (i < controllers.getLength() - 1) {
+                Element thinkTime = createModuleController(templateDoc, "ThinkTime", "ThinkTime", "1310565055");
+                utgHashTree.appendChild(thinkTime);
+                utgHashTree.appendChild(templateDoc.createElement("hashTree"));
+
+                Element logCtrl = createModuleController(templateDoc, "LogController", "LogController", "-1446982176");
+                utgHashTree.appendChild(logCtrl);
+                utgHashTree.appendChild(templateDoc.createElement("hashTree"));
+            } else {
+                Element logCtrl = createModuleController(templateDoc, "LogController", "LogController", "-1446982176");
+                utgHashTree.appendChild(logCtrl);
+                utgHashTree.appendChild(templateDoc.createElement("hashTree"));
+
+                Element paceTime = createModuleController(templateDoc, "PaceTime", "PaceTime", "809585568");
+                utgHashTree.appendChild(paceTime);
+                utgHashTree.appendChild(templateDoc.createElement("hashTree"));
+            }
+        }
+
+        applyCorrelations(templateDoc, correlationCandidates, correlationIds, exchanges);
 
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
         Transformer transformer = transformerFactory.newTransformer();
         transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        transformer.transform(new DOMSource(document), new StreamResult(jmxFile.toFile()));
+        transformer.transform(new DOMSource(templateDoc), new StreamResult(jmxFile.toFile()));
     }
 
     private void applyCorrelations(Document document, List<Map<String, String>> candidates,
@@ -754,185 +886,561 @@ public class HarConversionService {
         }
     }
 
-    private void replaceThreadGroup(Document document, String scenario, int users, int executeTime,
-                                    int rampUp, int rampDown) {
-        NodeList groups = document.getElementsByTagName("ThreadGroup");
-        if (groups.getLength() != 1) {
-            throw new IllegalStateException("Expected one generated Thread Group to replace.");
+    private void configureUltimateThreadGroupSchedule(Document templateDoc, boolean scenarioEnabled, String scenario,
+                                                      int users, int executeTime, int rampUp, int rampDown) {
+        Element utg = findByTagAndTestName(templateDoc, "kg.apc.jmeter.threads.UltimateThreadGroup", "BaseTestTamplet");
+        if (utg == null) {
+            utg = (Element) templateDoc.getElementsByTagName("kg.apc.jmeter.threads.UltimateThreadGroup").item(0);
         }
-        Element oldGroup = (Element) groups.item(0);
-        Element ultimateGroup = document.createElement("kg.apc.jmeter.threads.UltimateThreadGroup");
-        ultimateGroup.setAttribute("guiclass", "kg.apc.jmeter.threads.UltimateThreadGroupGui");
-        ultimateGroup.setAttribute("testclass", "kg.apc.jmeter.threads.UltimateThreadGroup");
-        ultimateGroup.setAttribute("testname", "jp@gc - Ultimate Thread Group (" + scenario + ")");
-        ultimateGroup.setAttribute("enabled", "true");
+        if (utg == null) return;
 
-        Element scheduleData = document.createElement("collectionProp");
-        scheduleData.setAttribute("name", "ultimatethreadgroupdata");
-        int rowIndex = 0;
-        for (ScheduleRow row : buildSchedule(scenario, users, executeTime, rampUp, rampDown)) {
-            Element rowElement = document.createElement("collectionProp");
-            rowElement.setAttribute("name", Integer.toString(rowIndex++));
-            appendScheduleValue(document, rowElement, "0", row.threads);
-            appendScheduleValue(document, rowElement, "1", row.delaySeconds);
-            appendScheduleValue(document, rowElement, "2", row.startupSeconds);
-            appendScheduleValue(document, rowElement, "3", row.holdSeconds);
-            appendScheduleValue(document, rowElement, "4", row.shutdownSeconds);
-            scheduleData.appendChild(rowElement);
-        }
-        ultimateGroup.appendChild(scheduleData);
-
-        Element loopController = document.createElement("elementProp");
-        loopController.setAttribute("name", "ThreadGroup.main_controller");
-        loopController.setAttribute("elementType", "LoopController");
-        loopController.setAttribute("guiclass", "LoopControlPanel");
-        loopController.setAttribute("testclass", "LoopController");
-        loopController.setAttribute("testname", "Loop Controller");
-        loopController.setAttribute("enabled", "true");
-        appendProperty(document, loopController, "boolProp", "LoopController.continue_forever", "true");
-        appendProperty(document, loopController, "stringProp", "LoopController.loops", "-1");
-        ultimateGroup.appendChild(loopController);
-        oldGroup.getParentNode().replaceChild(ultimateGroup, oldGroup);
-    }
-
-    private List<ScheduleRow> buildSchedule(String scenario, int users, int executeTime, int rampUp, int rampDown) {
-        int hold = executeTime - rampUp - rampDown;
-        switch (scenario) {
-            case "scalability":
-                return stagedSchedule(users, executeTime, rampUp, rampDown, false);
-            case "stress":
-                return stagedSchedule(users, executeTime, rampUp, rampDown, true);
-            case "spike":
-                return spikeSchedule(users, executeTime, rampUp, rampDown, hold);
-            case "endurance":
-                return Collections.singletonList(new ScheduleRow(users, 0, rampUp, executeTime, rampDown));
-            case "load":
-            default:
-                return Collections.singletonList(new ScheduleRow(users, 0, rampUp, hold, rampDown));
+        if (scenarioEnabled && !"load".equalsIgnoreCase(scenario)) {
+            utg.setAttribute("testname", "BaseTestTamplet (" + scenario + ")");
+            Element scheduleData = findFirstChildByTagAndName(utg, "collectionProp", "ultimatethreadgroupdata");
+            if (scheduleData != null) {
+                while (scheduleData.getFirstChild() != null) {
+                    scheduleData.removeChild(scheduleData.getFirstChild());
+                }
+                int rowIndex = 0;
+                for (ScheduleRow row : buildSchedule(scenario, users, executeTime, rampUp, rampDown)) {
+                    Element rowElement = templateDoc.createElement("collectionProp");
+                    rowElement.setAttribute("name", Integer.toString(rowIndex++));
+                    appendScheduleValue(templateDoc, rowElement, "0", row.threads);
+                    appendScheduleValue(templateDoc, rowElement, "1", row.delaySeconds);
+                    appendScheduleValue(templateDoc, rowElement, "2", row.startupSeconds);
+                    appendScheduleValue(templateDoc, rowElement, "3", row.holdSeconds);
+                    appendScheduleValue(templateDoc, rowElement, "4", row.shutdownSeconds);
+                    scheduleData.appendChild(rowElement);
+                }
+            }
+        } else {
+            utg.setAttribute("testname", "BaseTestTamplet");
+            Element scheduleData = findFirstChildByTagAndName(utg, "collectionProp", "ultimatethreadgroupdata");
+            if (scheduleData != null) {
+                while (scheduleData.getFirstChild() != null) {
+                    scheduleData.removeChild(scheduleData.getFirstChild());
+                }
+                Element rowElement = templateDoc.createElement("collectionProp");
+                rowElement.setAttribute("name", "1844437372");
+                appendScheduleString(templateDoc, rowElement, "1586624139", "${Test_Users}");
+                appendScheduleString(templateDoc, rowElement, "0", "0");
+                appendScheduleString(templateDoc, rowElement, "-337860278", "${StartupTime}");
+                appendScheduleString(templateDoc, rowElement, "523912544", "${TestDuration}");
+                appendScheduleString(templateDoc, rowElement, "523912544", "${ShutDownTime}");
+                scheduleData.appendChild(rowElement);
+            }
         }
     }
 
-    private List<ScheduleRow> stagedSchedule(int users, int executeTime, int rampUp, int rampDown, boolean stress) {
-        int availableSeconds = rampUp;
-        int stages = Math.min(4, Math.min(users, Math.max(1, availableSeconds)));
-        if (stages == 1) {
-            return Collections.singletonList(new ScheduleRow(users, 0, rampUp, executeTime - rampUp - rampDown, rampDown));
-        }
-        List<ScheduleRow> rows = new ArrayList<>();
-        int earlierUsers = 0;
-        for (int index = 0; index < stages; index++) {
-            int cumulativeUsers = (int) Math.ceil((double) users * (index + 1) / stages);
-            int stageUsers = cumulativeUsers - earlierUsers;
-            earlierUsers = cumulativeUsers;
-            int stageStart = stress
-                ? (int) ((long) index * availableSeconds / (stages - 1))
-                : (int) ((long) index * availableSeconds / stages);
-            int nextStageStart = (int) ((long) (index + 1) * availableSeconds / stages);
-            int startup = stress ? 0 : nextStageStart - stageStart;
-            int delay = stageStart;
-            int shutdownStart = executeTime - rampDown;
-            int stageHold = Math.max(0, shutdownStart - delay - startup);
-            rows.add(new ScheduleRow(stageUsers, delay, startup, stageHold, rampDown));
-        }
-        return rows;
-    }
-
-    private List<ScheduleRow> spikeSchedule(int users, int executeTime, int rampUp, int rampDown, int hold) {
-        if (users < 2 || hold < 5) {
-            return Collections.singletonList(new ScheduleRow(users, 0, rampUp, hold, rampDown));
-        }
-        int baselineUsers = Math.max(1, users / 10);
-        int spikeUsers = users - baselineUsers;
-        int spikeDuration = Math.min(30, Math.max(5, hold / 10));
-        int spikeDelay = executeTime - rampDown - spikeDuration;
-        List<ScheduleRow> rows = new ArrayList<>();
-        rows.add(new ScheduleRow(baselineUsers, 0, rampUp, hold, rampDown));
-        rows.add(new ScheduleRow(spikeUsers, spikeDelay, 0, spikeDuration, rampDown));
-        return rows;
-    }
-
-    private void appendScheduleValue(Document document, Element row, String name, int value) {
+    private void appendScheduleString(Document document, Element row, String name, String value) {
         Element property = document.createElement("stringProp");
         property.setAttribute("name", name);
-        property.setTextContent(Integer.toString(value));
+        property.setTextContent(value);
         row.appendChild(property);
     }
 
-    private void appendProperty(Document document, Element parent, String tag, String name, String value) {
-        Element property = document.createElement(tag);
+    private void appendScheduleValue(Document doc, Element parent, String name, int value) {
+        Element property = doc.createElement("stringProp");
+        property.setAttribute("name", name);
+        property.setTextContent(Integer.toString(value));
+        parent.appendChild(property);
+    }
+
+    private void appendProperty(Document doc, Element parent, String propertyType, String name, String value) {
+        Element property = doc.createElement(propertyType);
         property.setAttribute("name", name);
         property.setTextContent(value);
         parent.appendChild(property);
     }
 
-    private void addResponseAssertions(Element sampler, String textCheck1, String textCheck2) {
+    private List<ScheduleRow> buildSchedule(String scenario, int users, int executeTime, int rampUp, int rampDown) {
+        List<ScheduleRow> rows = new ArrayList<>();
+        if ("scalability".equalsIgnoreCase(scenario)) {
+            int cohorts = 4;
+            int stepRamp = Math.max(1, rampUp / cohorts);
+            int baseUsers = users / cohorts;
+            int remainder = users % cohorts;
+            for (int i = 0; i < cohorts; i++) {
+                int threads = baseUsers + (i < remainder ? 1 : 0);
+                int delay = i * stepRamp;
+                int startup = stepRamp;
+                int hold = Math.max(0, executeTime - (delay + startup) - rampDown);
+                rows.add(new ScheduleRow(threads, delay, startup, hold, rampDown));
+            }
+        } else if ("spike".equalsIgnoreCase(scenario)) {
+            int baseline = Math.max(1, (int) Math.round(users * 0.10));
+            int spikeThreads = Math.max(1, users - baseline);
+            int baselineHold = Math.max(0, executeTime - rampUp - rampDown);
+            rows.add(new ScheduleRow(baseline, 0, rampUp, baselineHold, rampDown));
+
+            int spikeStartup = Math.max(1, (int) Math.round(rampUp * 0.20));
+            int spikeShutdown = Math.max(1, (int) Math.round(rampDown * 0.20));
+            int spikeHold = Math.max(1, (int) Math.round((executeTime - rampUp - rampDown) * 0.20));
+            int spikeDelay = rampUp + (int) Math.round((executeTime - rampUp - rampDown) * 0.50);
+            rows.add(new ScheduleRow(spikeThreads, spikeDelay, spikeStartup, spikeHold, spikeShutdown));
+        } else if ("endurance".equalsIgnoreCase(scenario)) {
+            rows.add(new ScheduleRow(users, 0, rampUp, executeTime, rampDown));
+        } else if ("stress".equalsIgnoreCase(scenario)) {
+            int cohorts = 4;
+            int stepDelay = Math.max(1, rampUp / cohorts);
+            int baseUsers = users / cohorts;
+            int remainder = users % cohorts;
+            for (int i = 0; i < cohorts; i++) {
+                int threads = baseUsers + (i < remainder ? 1 : 0);
+                int delay = i * stepDelay;
+                int startup = 0;
+                int hold = Math.max(0, executeTime - delay - rampDown);
+                rows.add(new ScheduleRow(threads, delay, startup, hold, rampDown));
+            }
+        } else {
+            int hold = Math.max(0, executeTime - rampUp - rampDown);
+            rows.add(new ScheduleRow(users, 0, rampUp, hold, rampDown));
+        }
+        return rows;
+    }
+
+    private Element createModuleController(Document doc, String mcName, String targetName, String targetPropName) {
+        Element mc = doc.createElement("ModuleController");
+        mc.setAttribute("guiclass", "ModuleControllerGui");
+        mc.setAttribute("testclass", "ModuleController");
+        mc.setAttribute("testname", mcName);
+        mc.setAttribute("enabled", "true");
+        Element col = doc.createElement("collectionProp");
+        col.setAttribute("name", "ModuleController.node_path");
+
+        appendStringProp(doc, col, "764597751", "Test Plan");
+        appendStringProp(doc, col, "764597751", "Test Plan");
+        appendStringProp(doc, col, "170071582", "Test Fragment");
+        appendStringProp(doc, col, targetPropName, targetName);
+
+        mc.appendChild(col);
+        return mc;
+    }
+
+    private void appendStringProp(Document doc, Element parent, String name, String value) {
+        Element sp = doc.createElement("stringProp");
+        sp.setAttribute("name", name);
+        sp.setTextContent(value);
+        parent.appendChild(sp);
+    }
+
+    private Document loadBaseTemplate(DocumentBuilderFactory factory) throws Exception {
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        try (InputStream is = getClass().getResourceAsStream("/BaseTamPlet.jmx")) {
+            if (is != null) {
+                return builder.parse(is);
+            }
+        }
+        Path rootPath = Path.of("BaseTamPlet.jmx");
+        if (Files.exists(rootPath)) {
+            try (InputStream is = Files.newInputStream(rootPath)) {
+                return builder.parse(is);
+            }
+        }
+        Path parentPath = Path.of("..", "BaseTamPlet.jmx");
+        if (Files.exists(parentPath)) {
+            try (InputStream is = Files.newInputStream(parentPath)) {
+                return builder.parse(is);
+            }
+        }
+        throw new IllegalStateException("Base template BaseTamPlet.jmx not found in classpath or filesystem.");
+    }
+
+    private HarExchange findMatchingExchange(Element sampler, List<HarExchange> exchanges, int[] pointer, String originalDomain) {
+        if (exchanges == null || exchanges.isEmpty()) {
+            return null;
+        }
+        String path = propertyValue(sampler, "HTTPSampler.path");
+        int start = pointer[0];
+        for (int idx = start; idx < exchanges.size(); idx++) {
+            HarExchange ex = exchanges.get(idx);
+            if (matchesExchange(ex, originalDomain, path)) {
+                pointer[0] = idx + 1;
+                return ex;
+            }
+        }
+        for (int idx = 0; idx < start; idx++) {
+            HarExchange ex = exchanges.get(idx);
+            if (matchesExchange(ex, originalDomain, path)) {
+                return ex;
+            }
+        }
+        if (pointer[0] < exchanges.size()) {
+            return exchanges.get(pointer[0]++);
+        }
+        return exchanges.get(exchanges.size() - 1);
+    }
+
+    private boolean matchesExchange(HarExchange ex, String domain, String path) {
+        if (ex == null || ex.url == null) return false;
+        if (domain != null && !domain.isEmpty() && !ex.url.contains(domain)) {
+            return false;
+        }
+        if (path != null && !path.isEmpty()) {
+            String cleanPath = path.contains("?") ? path.substring(0, path.indexOf('?')) : path;
+            if (!cleanPath.isEmpty() && !"/".equals(cleanPath)) {
+                return ex.url.contains(cleanPath);
+            }
+        }
+        return true;
+    }
+
+    private void setBoolProperty(Element component, String propertyName, boolean value) {
+        NodeList properties = component.getElementsByTagName("boolProp");
+        for (int i = 0; i < properties.getLength(); i++) {
+            Element property = (Element) properties.item(i);
+            if (propertyName.equals(property.getAttribute("name"))) {
+                property.setTextContent(Boolean.toString(value));
+                return;
+            }
+        }
+        Element property = component.getOwnerDocument().createElement("boolProp");
+        property.setAttribute("name", propertyName);
+        property.setTextContent(Boolean.toString(value));
+        component.appendChild(property);
+    }
+
+    private void setArgumentValue(Element argumentsComponent, String argName, String argValue) {
+        if (argumentsComponent == null) return;
+        Element col = findFirstChildByTag(argumentsComponent, "collectionProp");
+        if (col == null) {
+            col = argumentsComponent.getOwnerDocument().createElement("collectionProp");
+            col.setAttribute("name", "Arguments.arguments");
+            argumentsComponent.appendChild(col);
+        }
+        NodeList elementProps = col.getElementsByTagName("elementProp");
+        for (int i = 0; i < elementProps.getLength(); i++) {
+            Element elem = (Element) elementProps.item(i);
+            if (argName.equals(elem.getAttribute("name"))) {
+                setProperty(elem, "Argument.value", argValue);
+                return;
+            }
+        }
+        Document doc = argumentsComponent.getOwnerDocument();
+        Element elem = doc.createElement("elementProp");
+        elem.setAttribute("name", argName);
+        elem.setAttribute("elementType", "Argument");
+        appendProperty(doc, elem, "stringProp", "Argument.name", argName);
+        appendProperty(doc, elem, "stringProp", "Argument.value", argValue);
+        appendProperty(doc, elem, "stringProp", "Argument.metadata", "=");
+        col.appendChild(elem);
+    }
+
+    private void clearArgumentsMatching(Element argumentsComponent, Pattern pattern) {
+        if (argumentsComponent == null) return;
+        Element col = findFirstChildByTag(argumentsComponent, "collectionProp");
+        if (col == null) return;
+        NodeList elementProps = col.getElementsByTagName("elementProp");
+        List<Element> toRemove = new ArrayList<>();
+        for (int i = 0; i < elementProps.getLength(); i++) {
+            Element elem = (Element) elementProps.item(i);
+            String name = elem.getAttribute("name");
+            if (name != null && pattern.matcher(name).matches()) {
+                toRemove.add(elem);
+            }
+        }
+        for (Element elem : toRemove) {
+            col.removeChild(elem);
+        }
+    }
+
+    private Element findFirstChildByTag(Element parent, String tagName) {
+        if (parent == null) return null;
+        NodeList list = parent.getChildNodes();
+        for (int i = 0; i < list.getLength(); i++) {
+            Node n = list.item(i);
+            if (n instanceof Element && tagName.equals(n.getNodeName())) {
+                return (Element) n;
+            }
+        }
+        return null;
+    }
+
+    private Element findFirstChildByTagAndName(Element parent, String tagName, String nameAttr) {
+        if (parent == null) return null;
+        NodeList list = parent.getChildNodes();
+        for (int i = 0; i < list.getLength(); i++) {
+            Node n = list.item(i);
+            if (n instanceof Element && tagName.equals(n.getNodeName())) {
+                Element e = (Element) n;
+                if (nameAttr.equals(e.getAttribute("name"))) {
+                    return e;
+                }
+            }
+        }
+        return null;
+    }
+
+    private void addJSR223Assertion(Element sampler, String txnName, String textCheck1, String textCheck2) {
+        addJSR223Assertion(sampler, txnName, textCheck1, textCheck2, null);
+    }
+
+    private void addJSR223Assertion(Element sampler, String txnName, String textCheck1, String textCheck2, HarExchange exchange) {
         Element samplerHashTree = nextHashTree(sampler);
         if (samplerHashTree == null) {
             return;
         }
         Document document = sampler.getOwnerDocument();
-        Element assertion = document.createElement("BeanShellAssertion");
-        assertion.setAttribute("guiclass", "BeanShellAssertionGui");
-        assertion.setAttribute("testclass", "BeanShellAssertion");
-        assertion.setAttribute("testname", "Assert HTTP 2xx/3xx and Response Text Checks");
+        Element assertion = document.createElement("JSR223Assertion");
+        assertion.setAttribute("guiclass", "TestBeanGUI");
+        assertion.setAttribute("testclass", "JSR223Assertion");
+        assertion.setAttribute("testname", "JSR223 Assertion");
         assertion.setAttribute("enabled", "true");
 
+        appendProperty(document, assertion, "stringProp", "cacheKey", "true");
+        appendProperty(document, assertion, "stringProp", "filename", "");
+        appendProperty(document, assertion, "stringProp", "parameters", "");
+
+        String[] identified = identifyTwoTextChecks(exchange, textCheck1, textCheck2);
+        String check1 = escapeGroovyString(identified[0]);
+        String check2 = escapeGroovyString(identified[1]);
+        String safeTxnName = txnName != null ? escapeGroovyString(txnName) : "Transaction";
+
         StringBuilder script = new StringBuilder();
-        script.append("String rc = prev.getResponseCode();\n");
-        script.append("int code = 0;\n");
+        script.append("String TXN_NAME = \"").append(safeTxnName).append("\"\n");
+        script.append("String TEXT_CHECK = \"").append(check1).append("\"\n");
+        script.append("String TEXT_CHECK1 = \"").append(check2).append("\"\n\n");
+        script.append("Set<String> OK_CODES = [\"200\", \"201\", \"202\", \"204\", \"302\"] as Set\n");
+        script.append("int MAX_ERR_LEN = 500\n\n");
+        script.append("// ---- Status values ---------------------------------------------------------\n");
+        script.append("String ST_PASS = \"Pass\"\n");
+        script.append("String ST_SLOW = \"Slow\"\n");
+        script.append("String ST_FAIL = \"Fail\"\n\n");
+        script.append("// ---- Response data --------------------------------------------------------\n");
+        script.append("String responseCode = prev.getResponseCode() ?: \"\"\n");
+        script.append("String response = prev.getResponseDataAsString() ?: \"\"\n\n");
+        script.append("// Strip characters that break Grafana ingestion\n");
+        script.append("for (String ch : ['\\r', '\\n', ',', '-', '?', \"'\", '{', '}', '/', '\"']) {\n");
+        script.append("    response = response.replace(ch, \"\")\n");
+        script.append("}\n\n");
+        script.append("// ---- Load time and threshold ----------------------------------------------\n");
+        script.append("long loadTime = prev.getTime()\n");
+        script.append("vars.put(\"LoadTime\", String.valueOf(loadTime))\n\n");
+        script.append("long acceptableRespTime = Long.MAX_VALUE\n");
         script.append("try {\n");
-        script.append("    code = Integer.parseInt(rc);\n");
-        script.append("} catch (Exception e) {}\n");
-        script.append("if (code < 200 || code >= 400) {\n");
-        script.append("    Failure = true;\n");
-        script.append("    FailureMessage = \"Expected positive HTTP response code (2xx or 3xx), got: \" + rc;\n");
-        script.append("    return;\n");
+        script.append("    acceptableRespTime = Long.parseLong(\n");
+        script.append("        vars.get(\"v_AcceptableRespTime\") ?: \"\"\n");
+        script.append("    )\n");
+        script.append("} catch (NumberFormatException e) {\n");
+        script.append("    log.warn(\"v_AcceptableRespTime missing or not numeric, skipping slow check\")\n");
+        script.append("}\n\n");
+        script.append("// ---- Fields logged to Grafana ---------------------------------------------\n");
+        script.append("String errShort = response.length() > MAX_ERR_LEN\n");
+        script.append("    ? response.substring(0, MAX_ERR_LEN)\n");
+        script.append("    : response\n\n");
+        script.append("vars.put(\"TransactionName\", TXN_NAME)\n");
+        script.append("vars.put(\"ResponseCode\", responseCode)\n");
+        script.append("vars.put(\"UniqueIdentifier\", \"Application ID: \" + (vars.get(\"C_ApplicationID\") ?: \"NA\"))\n");
+        script.append("vars.put(\"ErrorMsg\", \"NA\")\n\n");
+        script.append("// ---- Validation ------------------------------------------------------------\n");
+        script.append("boolean codeOk = OK_CODES.contains(responseCode.trim())\n");
+        script.append("boolean textOk = (TEXT_CHECK.isEmpty() || TEXT_CHECK.equals(\"NotFoundResponseData\") || response.contains(TEXT_CHECK)) &&\n");
+        script.append("                 (TEXT_CHECK1.isEmpty() || TEXT_CHECK1.equals(\"NotFoundResponseData\") || response.contains(TEXT_CHECK1))\n\n");
+        script.append("if (codeOk && textOk) {\n");
+        script.append("    if (loadTime > acceptableRespTime) {\n");
+        script.append("        vars.put(\"status\", ST_SLOW)\n");
+        script.append("        vars.put(\"ErrorMsg\",\n");
+        script.append("            \"ResponseTime \" + loadTime +\n");
+        script.append("            \" ms higher than \" + acceptableRespTime + \" ms\")\n");
+        script.append("    } else {\n");
+        script.append("        vars.put(\"status\", ST_PASS)\n");
+        script.append("    }\n\n");
+        script.append("    AssertionResult.setFailure(false)\n\n");
+        script.append("} else {\n");
+        script.append("    String msg\n\n");
+        script.append("    if (responseCode.contains(\"Non HTTP response code\")) {\n");
+        script.append("        vars.put(\"ResponseCode\", \"ReceivedNonHTTPResponseCode\")\n");
+        script.append("        msg = \"ReceivedNonHTTPResponseCode\"\n");
+        script.append("    } else if (!codeOk) {\n");
+        script.append("        msg = \"Unexpected response code: \" + responseCode\n");
+        script.append("    } else {\n");
+        script.append("        msg = \"Expected text not found: \" +\n");
+        script.append("              TEXT_CHECK + \" / \" + TEXT_CHECK1\n");
+        script.append("    }\n\n");
+        script.append("    vars.put(\"ErrorMsg\", msg)\n");
+        script.append("    vars.put(\"status\", ST_FAIL)\n\n");
+        script.append("    AssertionResult.setFailure(true)\n");
+        script.append("    AssertionResult.setFailureMessage(msg)\n");
         script.append("}\n");
 
-        boolean hasCheck1 = textCheck1 != null && !textCheck1.trim().isEmpty();
-        boolean hasCheck2 = textCheck2 != null && !textCheck2.trim().isEmpty();
-
-        if (hasCheck1 || hasCheck2) {
-            script.append("String respData = prev.getResponseDataAsString();\n");
-            script.append("String respMsg = prev.getResponseMessage();\n");
-        }
-
-        if (hasCheck1 && hasCheck2) {
-            String c1 = escapeJavaString(textCheck1.trim());
-            String c2 = escapeJavaString(textCheck2.trim());
-            script.append("boolean pass1 = (respData != null && respData.contains(\"").append(c1).append("\")) || (respMsg != null && respMsg.contains(\"").append(c1).append("\"));\n");
-            script.append("boolean pass2 = (respData != null && respData.contains(\"").append(c2).append("\")) || (respMsg != null && respMsg.contains(\"").append(c2).append("\"));\n");
-            script.append("if (!pass1 || !pass2) {\n");
-            script.append("    Failure = true;\n");
-            script.append("    FailureMessage = \"Response text checks failed. Both '").append(c1).append("' and '").append(c2).append("' must be valid in response (pass1=\" + pass1 + \", pass2=\" + pass2 + \")\";\n");
-            script.append("}\n");
-        } else if (hasCheck1) {
-            String c1 = escapeJavaString(textCheck1.trim());
-            script.append("boolean pass1 = (respData != null && respData.contains(\"").append(c1).append("\")) || (respMsg != null && respMsg.contains(\"").append(c1).append("\"));\n");
-            script.append("if (!pass1) {\n");
-            script.append("    Failure = true;\n");
-            script.append("    FailureMessage = \"Response text check failed for '").append(c1).append("'\";\n");
-            script.append("}\n");
-        } else if (hasCheck2) {
-            String c2 = escapeJavaString(textCheck2.trim());
-            script.append("boolean pass2 = (respData != null && respData.contains(\"").append(c2).append("\")) || (respMsg != null && respMsg.contains(\"").append(c2).append("\"));\n");
-            script.append("if (!pass2) {\n");
-            script.append("    Failure = true;\n");
-            script.append("    FailureMessage = \"Response text check failed for '").append(c2).append("'\";\n");
-            script.append("}\n");
-        }
-
-        appendProperty(document, assertion, "stringProp", "BeanShellAssertion.query", script.toString());
-        appendProperty(document, assertion, "stringProp", "BeanShellAssertion.filename", "");
-        appendProperty(document, assertion, "stringProp", "BeanShellAssertion.parameters", "");
-        appendProperty(document, assertion, "boolProp", "BeanShellAssertion.resetInterpreter", "false");
+        appendProperty(document, assertion, "stringProp", "script", script.toString());
+        appendProperty(document, assertion, "stringProp", "scriptLanguage", "groovy");
         samplerHashTree.appendChild(assertion);
         samplerHashTree.appendChild(document.createElement("hashTree"));
     }
 
-    private String escapeJavaString(String str) {
+    private static final Set<String> STOP_WORDS = new HashSet<>(Arrays.asList(
+            "true", "false", "null", "undefined", "none", "string", "number", "object", "array", "boolean",
+            "html", "head", "body", "script", "style", "meta", "link", "title", "span", "div", "table", "tbody", "thead",
+            "class", "href", "src", "type", "name", "value", "width", "height", "xmlns", "doctype",
+            "function", "var", "let", "const", "return", "import", "export", "this", "that", "with",
+            "from", "http", "https", "www", "com", "org", "net", "and", "the", "for", "then", "else"
+    ));
+
+    private boolean isStopWord(String word) {
+        return word == null || word.length() < 3 || STOP_WORDS.contains(word.toLowerCase());
+    }
+
+    private String sanitizeForGrafana(String text) {
+        if (text == null) return "";
+        String s = text;
+        for (char ch : new char[]{'\r', '\n', ',', '-', '?', '\'', '{', '}', '/', '"', '\\'}) {
+            s = s.replace(String.valueOf(ch), "");
+        }
+        return s;
+    }
+
+    private String[] identifyTwoTextChecks(HarExchange exchange, String userCheck1, String userCheck2) {
+        boolean hasUser1 = userCheck1 != null && !userCheck1.trim().isEmpty();
+        boolean hasUser2 = userCheck2 != null && !userCheck2.trim().isEmpty();
+        if (hasUser1 && hasUser2) {
+            return new String[]{userCheck1.trim(), userCheck2.trim()};
+        }
+
+        boolean hasResponse = exchange != null && exchange.responseText != null && !exchange.responseText.trim().isEmpty();
+        List<String> candidates = hasResponse ? extractTextCheckCandidates(exchange.mimeType, exchange.responseText) : Collections.emptyList();
+        String sanitized = hasResponse ? sanitizeForGrafana(exchange.responseText) : "";
+
+        String check1 = "";
+        if (hasUser1) {
+            check1 = userCheck1.trim();
+        } else if (hasResponse) {
+            for (String c : candidates) {
+                if (sanitized.contains(c)) {
+                    check1 = c;
+                    break;
+                }
+            }
+            if (check1.isEmpty() && exchange.statusText != null && !exchange.statusText.isEmpty() && !isStopWord(exchange.statusText)) {
+                check1 = exchange.statusText;
+            }
+        }
+        if (check1.isEmpty()) {
+            check1 = "NotFoundResponseData";
+        }
+
+        String check2 = "";
+        if (hasUser2) {
+            check2 = userCheck2.trim();
+        } else if (hasResponse) {
+            for (String c : candidates) {
+                if (sanitized.contains(c) && !c.equalsIgnoreCase(check1)) {
+                    check2 = c;
+                    break;
+                }
+            }
+        }
+        if (check2.isEmpty()) {
+            check2 = "NotFoundResponseData";
+        }
+
+        return new String[]{check1, check2};
+    }
+
+    private List<String> extractTextCheckCandidates(String mimeType, String responseText) {
+        List<String> candidates = new ArrayList<>();
+        if (responseText == null || responseText.trim().isEmpty()) {
+            return candidates;
+        }
+
+        String sanitized = sanitizeForGrafana(responseText);
+        String trimmed = responseText.trim();
+        if ((mimeType != null && mimeType.toLowerCase().contains("json")) ||
+                (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+                (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+            try {
+                JsonNode root = objectMapper.readTree(responseText);
+                collectJsonCandidates(root, candidates);
+            } catch (Exception ignored) {
+            }
+        }
+
+        if ((mimeType != null && mimeType.toLowerCase().contains("html")) || responseText.contains("<html")) {
+            collectHtmlCandidates(responseText, candidates);
+        }
+
+        Pattern wordPattern = Pattern.compile("\\b[A-Za-z][A-Za-z0-9_]{2,25}\\b");
+        Matcher m = wordPattern.matcher(responseText);
+        while (m.find()) {
+            String w = m.group();
+            if (!isStopWord(w) && sanitized.contains(w) && !candidates.contains(w)) {
+                candidates.add(w);
+            }
+        }
+
+        return candidates;
+    }
+
+    private void collectJsonCandidates(JsonNode node, List<String> candidates) {
+        if (node.isObject()) {
+            List<String> priorityKeys = Arrays.asList("status", "message", "result", "success", "title", "name", "code", "type", "action", "state");
+            for (String pKey : priorityKeys) {
+                JsonNode valNode = node.get(pKey);
+                if (valNode != null && valNode.isTextual()) {
+                    addCleanCandidateWords(valNode.asText(), candidates);
+                }
+            }
+            node.fields().forEachRemaining(entry -> {
+                String key = entry.getKey();
+                JsonNode val = entry.getValue();
+                if (val.isTextual()) {
+                    addCleanCandidateWords(val.asText(), candidates);
+                }
+                if (!isStopWord(key) && key.length() >= 3 && !candidates.contains(key)) {
+                    candidates.add(key);
+                }
+                if (val.isContainerNode()) {
+                    collectJsonCandidates(val, candidates);
+                }
+            });
+        } else if (node.isArray()) {
+            int count = 0;
+            for (JsonNode item : node) {
+                collectJsonCandidates(item, candidates);
+                if (++count > 10) break;
+            }
+        }
+    }
+
+    private void collectHtmlCandidates(String html, List<String> candidates) {
+        Matcher titleMatcher = Pattern.compile("(?i)<title[^>]*>(.*?)</title>").matcher(html);
+        if (titleMatcher.find()) {
+            addCleanCandidateWords(titleMatcher.group(1), candidates);
+        }
+        Matcher hMatcher = Pattern.compile("(?i)<h[12][^>]*>(.*?)</h[12]>").matcher(html);
+        while (hMatcher.find()) {
+            addCleanCandidateWords(hMatcher.group(1), candidates);
+        }
+        Matcher btnMatcher = Pattern.compile("(?i)(?:type=[\"']submit[\"']|class=[\"'][^\"']*btn[^\"']*[\"'])[^>]*value=[\"']([^\"']+)[\"']").matcher(html);
+        while (btnMatcher.find()) {
+            addCleanCandidateWords(btnMatcher.group(1), candidates);
+        }
+    }
+
+    private void addCleanCandidateWords(String text, List<String> candidates) {
+        if (text == null || text.trim().isEmpty()) return;
+        String[] parts = text.split("[^A-Za-z0-9_]+");
+        for (String part : parts) {
+            String trimmed = part.trim();
+            if (trimmed.length() >= 3 && trimmed.length() <= 30 && !isStopWord(trimmed) && !candidates.contains(trimmed)) {
+                candidates.add(trimmed);
+            }
+        }
+        if (!text.matches(".*[\\r\\n,\\-?'{}/\"\\\\].*") && text.trim().length() >= 3 && text.trim().length() <= 30) {
+            String full = text.trim();
+            if (!isStopWord(full) && !candidates.contains(full)) {
+                candidates.add(full);
+            }
+        }
+    }
+
+    private String escapeGroovyString(String str) {
         if (str == null) return "";
-        return str.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
+        return str.replace("\\", "\\\\")
+                  .replace("\"", "\\\"")
+                  .replace("$", "\\$")
+                  .replace("\n", "\\n")
+                  .replace("\r", "\\r");
     }
 
     private Element nextHashTree(Element element) {
@@ -1072,12 +1580,20 @@ public class HarConversionService {
         private final String url;
         private final String mimeType;
         private final String responseText;
+        private final int statusCode;
+        private final String statusText;
 
-        private HarExchange(String fileName, String url, String mimeType, String responseText) {
+        private HarExchange(String fileName, String url, String mimeType, String responseText, int statusCode, String statusText) {
             this.fileName = fileName;
             this.url = url;
             this.mimeType = mimeType;
             this.responseText = responseText;
+            this.statusCode = statusCode;
+            this.statusText = statusText != null ? statusText : "";
+        }
+
+        private HarExchange(String fileName, String url, String mimeType, String responseText, int statusCode) {
+            this(fileName, url, mimeType, responseText, statusCode, "");
         }
     }
 
